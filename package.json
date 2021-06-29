@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon -w src --exec babel-node src",
+    "stag": "SET NODE_ENV=staging & nodemon -w src --exec babel-node src"
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,20 @@
     "@babel/cli": "^7.14.5",
     "@babel/core": "^7.14.6",
     "@babel/node": "^7.14.7",
-    "@babel/preset-env": "^7.14.7"
+    "@babel/preset-env": "^7.14.7",
+    "ndb": "^1.1.5"
+  },
+  "dependencies": {
+    "apollo-server-express": "^2.25.2",
+    "bcrypt": "^5.0.1",
+    "config": "^3.3.6",
+    "express": "^4.17.1",
+    "express-jwt": "^6.0.0",
+    "graphql": "^15.5.1",
+    "graphql-middleware": "^6.0.10",
+    "graphql-shield": "^7.5.0",
+    "graphql-tools": "^7.0.5",
+    "mongoose": "^5.12.15",
+    "morgan": "^1.10.0"
   }
 }
