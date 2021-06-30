@@ -30,10 +30,7 @@ morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :
 app.use(morgan('custom'));
 
 // Token Bearer Authorization
-/* AFSS - Pendiente poner en notas
-  -> middleware que extrae un token dentro de los headers de http
-  llamada authorization
-*/
+
 /* Old way to implement express-jwt app.use(ejwt({secret: config.app.secret, credentialsRequired: false}), function (err, req, res, next) {
   if (err.code === 'invalid_token') return next();
   return next(err);
