@@ -7,22 +7,22 @@ function checkPermission(user, permiso) {
   return false;
 }
 
-const isAuthenticated = rule()((parent, args, { user }) => {
+const isAuthenticated = rule({ cache: 'contextual' })((parent, args, { user }) => {
   return user !== null;
 });
 
 const canUpdateOwnData = rule()((parent, args, { user }) => {
-  return checkPermission(user, "mdCompras:270122021");
+  return checkPermission(user, "moduloCompras:270122021");
 });
 
-const freepass = rule()((parent, args, { user }) => {
+const freepass = rule({ cache: 'contextual' })((parent, args, { user }) => {
   return true;
 });
 
 export default shield({
   Query: {
     //test: or(and(canReadOwnUser, isReadingOwnUser), canReadAnyUser),
-    test: canUpdateOwnData
+    test: isAuthenticated
   },
   Mutation: {
     inicioSesion: freepass

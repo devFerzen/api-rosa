@@ -5,14 +5,15 @@ import bcrypt from 'bcrypt';
 module.exports = {
   Query: {
       test: async(_, args, { user }) => {
-        console.log("user.sub para saber id");
+        
         console.dir(user);
-        return `testing...${user["http://localhost:3000/graphql"].permisos[0]}`;
+        return `testing...${user["http://localhost:3000/graphql"].id}`;
       }
   },
 
   Mutation: {
     async inicioSesion(parent, {correo, contrasena}, {Models}){
+
       const SearchedUser = await Models.Usuario.findOne({usuario: correo});
       /*let comparacionContras = await bcrypt.compare(contrasena, SearchedUser.contrasena);
       if(!comparacionContras){

@@ -19,7 +19,7 @@ mongoose.connect(`${config.mongoUrl}`,{
   useUnifiedTopology: true,
   useNewUrlParser: true
 }).then(mongoose =>  console.log("DB Conectada... (°u°)"))
-.catch(err => console.log("DB No Conectada... (T.T)"));
+.catch(err => console.log("DB No se Conecto... (T.T)"));
 
 //Server and env Config
 const port = process.env.PORT || 3000;
@@ -30,18 +30,11 @@ morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :
 app.use(morgan('custom'));
 
 // Token Bearer Authorization
-
-/* Old way to implement express-jwt app.use(ejwt({secret: config.app.secret, credentialsRequired: false}), function (err, req, res, next) {
-  if (err.code === 'invalid_token') return next();
-  return next(err);
-});
 app.use(expressJwt({
     secret: "envPassSecret",
     algorithms: ["HS256"],
     credentialsRequired: false
-}).unless({
-  path:['/graphql']
-}));*/
+}));
 
 // Apollo Server
 const apolloContext = ({ req, res }) => ({
@@ -49,6 +42,8 @@ const apolloContext = ({ req, res }) => ({
     user : req.user || null,
     Models
 });
+
+
 const server = new ApolloServer({
   schema: applyMiddleware(
     graphqlSchema,
