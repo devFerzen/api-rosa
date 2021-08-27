@@ -5,7 +5,8 @@ const usuarioQueries = gql `
   }
 
   type Mutation {
-    inicioSesion(correo: String!, contrasena: String!): Sesion!
+    inicioSesion(correo: String!, contrasena: String!): UsuarioType!,
+    registroUsuario(input: UsuarioInput!): UsuarioType!
   }
 `;
 module.exports = usuarioQueries;

@@ -15,9 +15,11 @@ import morgan from 'morgan';
 import Models from './graphql/models';
 
 //Conexión MongoDb
+mongoose.set('debug',true);
 mongoose.connect(`${config.mongoUrl}`,{
   useUnifiedTopology: true,
-  useNewUrlParser: true
+  useNewUrlParser: true,
+  useFindAndModify: false
 }).then(mongoose =>  console.log("DB Conectada... (°u°)"))
 .catch(err => console.log("DB No se Conecto... (T.T)"));
 
@@ -26,8 +28,8 @@ const port = process.env.PORT || 3000;
 const app = express();
 
 //Http console logs
-morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :status " +"Con un tiempo de :total-time[2] milliseconds...");
-app.use(morgan('custom'));
+/*morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :status " +"Con un tiempo de :total-time[2] milliseconds...");
+app.use(morgan('custom'));*/
 
 // Token Bearer Authorization
 app.use(expressJwt({
@@ -46,8 +48,7 @@ const apolloContext = ({ req, res }) => ({
 
 const server = new ApolloServer({
   schema: applyMiddleware(
-    graphqlSchema,
-    permissions
+    graphqlSchema
   ),
   graphiql: process.env.NODE_ENV != 'production' ? true : false,
   context: apolloContext
