@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 const usuarioQueries = gql `
   type Query {
-    test: String
+    queryUsuarioById(id: String!): UsuarioType!
   }
 
   type Mutation {

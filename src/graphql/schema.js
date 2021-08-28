@@ -6,16 +6,16 @@ import tiposSubBase from './queries/tipos-globales-subBase';
 
 import usuarioQueries from './queries/usuario-queries';
 import anuncioQueries from './queries/anuncio-queries';
-import bitacoraCreacionQueries from './queries/bitacora-creacion-queries';
+import paquetesQueries from './queries/paquetes-queries';
 
 import usuarioResolvers from './resolvers/usuario-resolver';
 import anuncioResolvers from './resolvers/anuncio-resolver';
-import bitacorasCreacionResolvers from './resolvers/bitacoras-creacion-resolver';
+import paquetesResolvers from './resolvers/paquetes-resolver';
 
-const defs = mergeTypeDefs([tiposBase, tiposSubBase, usuarioQueries, anuncioQueries]);
-const resolver = mergeResolvers([usuarioResolvers, anuncioResolvers]);
+const defs = mergeTypeDefs([tiposBase, tiposSubBase, usuarioQueries, anuncioQueries, paquetesQueries]);
+const resolver = mergeResolvers([usuarioResolvers, anuncioResolvers, paquetesResolvers]);
 
 export default makeExecutableSchema({
-  typeDefs: defs,
-  resolvers: resolver
+    typeDefs: defs,
+    resolvers: resolver
 });

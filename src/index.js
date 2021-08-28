@@ -15,13 +15,13 @@ import morgan from 'morgan';
 import Models from './graphql/models';
 
 //Conexión MongoDb
-mongoose.set('debug',true);
-mongoose.connect(`${config.mongoUrl}`,{
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
-  useFindAndModify: false
-}).then(mongoose =>  console.log("DB Conectada... (°u°)"))
-.catch(err => console.log("DB No se Conecto... (T.T)"));
+mongoose.set('debug', true);
+mongoose.connect(`${config.mongoUrl}`, {
+        useUnifiedTopology: true,
+        useNewUrlParser: true,
+        useFindAndModify: false
+    }).then(mongoose => console.log("DB Conectada... (°u°)"))
+    .catch(err => console.log("DB No se Conecto... (T.T)"));
 
 //Server and env Config
 const port = process.env.PORT || 3000;
@@ -41,20 +41,20 @@ app.use(expressJwt({
 // Apollo Server
 const apolloContext = ({ req, res }) => ({
     res,
-    user : req.user || null,
+    user: req.user || null,
     Models
 });
 
-
+// http://localhost:3000/graphql
 const server = new ApolloServer({
-  schema: applyMiddleware(
-    graphqlSchema
-  ),
-  graphiql: process.env.NODE_ENV != 'production' ? true : false,
-  context: apolloContext
+    schema: applyMiddleware(
+        graphqlSchema
+    ),
+    graphiql: process.env.NODE_ENV != 'production' ? true : false,
+    context: apolloContext
 });
 
 server.applyMiddleware({ app });
-app.listen( port, () => {
-  console.log(`Servidor en el puerto: ${port}...`);
+app.listen(port, () => {
+    console.log(`Servidor en el puerto: ${port}...`);
 });

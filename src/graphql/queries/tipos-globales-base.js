@@ -68,5 +68,25 @@ const tiposBase = gql `
     comentario: String,
     fecha_respuesta: Date
   }
+
+  type PaqueteType {
+    clave: String,
+    tipo: String,
+    nombre: String,
+    descripcion: String,
+    precio: Int,
+    periodo_por: Int,
+    estado: Boolean
+  }
+
+  input PaqueteInput {
+    clave: String,
+    tipo: String,
+    nombre: String,
+    descripcion: String,
+    precio: Int,
+    periodo_por: Int,
+    estado: Boolean
+  }
 `;
 module.exports = tiposBase;
