@@ -27,7 +27,8 @@ const tiposSubBase = gql `
     titulo: String,
     estado: String,
     ciudad: String,
-    descripcion: String
+    descripcion: String,
+    sexo: String
   }
 
   type SecContactoType {

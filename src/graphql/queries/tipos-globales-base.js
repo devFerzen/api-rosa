@@ -67,6 +67,7 @@ const tiposBase = gql `
   input VerificacionInput {
     id_verificacion: String,
     id_anuncio: String,
+    id_usuario: String,
     foto_anuncio: String,
     respuesta: Boolean,
     comentario: String,

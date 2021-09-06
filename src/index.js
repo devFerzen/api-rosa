@@ -15,7 +15,7 @@ import morgan from 'morgan';
 import Models from './graphql/models';
 
 //Conexión MongoDb
-mongoose.set('debug', true);
+mongoose.set('debug', false);
 mongoose.connect(`${config.mongoUrl}`, {
         useUnifiedTopology: true,
         useNewUrlParser: true,
@@ -35,7 +35,7 @@ app.use(morgan('custom'));*/
 app.use(expressJwt({
     secret: "envPassSecret",
     algorithms: ["HS256"],
-    credentialsRequired: true
+    credentialsRequired: false
 }));
 
 // Apollo Server
@@ -48,8 +48,8 @@ const apolloContext = ({ req, res }) => ({
 // http://localhost:3000/graphql
 const server = new ApolloServer({
     schema: applyMiddleware(
-        graphqlSchema,
-        permissions
+        graphqlSchema
+        //AFSS: Hace que no muestre los errores y pone not authorised permissions
     ),
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext
