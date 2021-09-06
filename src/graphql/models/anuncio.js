@@ -38,6 +38,7 @@ const anuncioSchema = new Schema(
       estado: { type: String, required: true },
       ciudad: { type: String, required: true },
       descripcion: { type: String, required: true },
+      sexo: { type: String, required: true }
     },
     Sec_Contacto: { type:[contactoSchema], default: undefined},
     Sec_Tarifas: { type:[tarifaSchema], default: undefined},

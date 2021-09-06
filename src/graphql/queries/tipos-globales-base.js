@@ -9,9 +9,13 @@ const tiposBase = gql `
     numero_telefonico: String,
     numero_telefonico_verificado: Boolean,
     Ubicacion_Usuario: UbicacionUsuarioType,
-    Default_Contactos: DefaultContactosType,
+    Default_Contactos: SecContactoType,
     anuncios_usuario: [String],
     terminos_condiciones: Boolean,
+    max_updates: Int,
+    max_intentos: Int,
+    codigo_verificacion_celular: String!,
+    codigo_verificacion_usuario: String!,
     estado: Boolean
   }
 
@@ -21,7 +25,7 @@ const tiposBase = gql `
     numero_telefonico: String!,
     numero_telefonico_verificado: Boolean,
     Ubicacion_Usuario: UbicacionUsuarioInput,
-    Default_Contactos: DefaultContactosInput,
+    Default_Contactos: SecContactoInput,
     anuncios_usuario: [String],
     terminos_condiciones: Boolean,
     estado: Boolean
@@ -87,6 +91,15 @@ const tiposBase = gql `
     precio: Int,
     periodo_por: Int,
     estado: Boolean
+  }
+
+  input QueryAnuncioInput {
+    buscar_por: String,
+    categorias: [String],
+    estado: String,
+    ciudad: String,
+    verificado: Boolean,
+    sexo: [String]
   }
 `;
 module.exports = tiposBase;

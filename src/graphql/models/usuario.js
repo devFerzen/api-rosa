@@ -22,6 +22,10 @@ const usuarioSchema = new Schema(
     Default_Contactos: { type: [DefaultContactoSchema], default: undefined },
     anuncios_usuario: [ {type: [String], default: undefined } ],
     terminos_condiciones: { type: Boolean, default: true },
+    max_intentos: { type: Number, default: 0},
+    max_updates: { type: Number, default: 0},
+    codigo_verificacion_celular: { type: String, default:undefined },
+    codigo_verificacion_usuario: { type: String, default:undefined },
     estado: { type: Boolean, default: true }
   },
   {
@@ -31,6 +35,15 @@ const usuarioSchema = new Schema(
     }
   }
 );
+
+usuarioSchema.post('save', function(error, doc, next) {
+  if (error.name === 'MongoError' && error.code === 11000) {
+    next(new Error('There was a duplicate key error'));
+  } else {
+    next(error);
+  }
+});
+
 
 const usuario = model('usuario', usuarioSchema);
 export default usuario;

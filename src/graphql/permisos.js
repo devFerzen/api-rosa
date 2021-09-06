@@ -16,15 +16,16 @@ const canUpdateOwnData = rule()((parent, args, { user }) => {
 });
 
 const freepass = rule({ cache: 'contextual' })((parent, args, { user }) => {
+  console.log("user")
+  console.dir(user)
   return true;
 });
 
 export default shield({
   Query: {
     //test: or(and(canReadOwnUser, isReadingOwnUser), canReadAnyUser),
-    test: isAuthenticated
+    queryAnuncios: freepass
   },
   Mutation: {
-    inicioSesion: freepass
   }
 });

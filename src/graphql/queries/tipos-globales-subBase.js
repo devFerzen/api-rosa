@@ -15,21 +15,12 @@ const tiposSubBase = gql `
     ip: String
   }
 
-  type DefaultContactosType {
-    tipo: String,
-    url: String
-  }
-
-  input DefaultContactosInput {
-    tipo: String,
-    url: String
-  }
-
   type SecDescripcionType {
     titulo: String,
     estado: String,
     ciudad: String,
-    descripcion: String
+    descripcion: String,
+    sexo: String,
   }
 
   input SecDescripcionInput {
@@ -49,25 +40,15 @@ const tiposSubBase = gql `
     Tipo: TipoInput
   }
 
-  type TipoType {
-    categoria: String,
-    icono: String
-  }
-
-  input TipoInput {
-    categoria: String,
-    icono: String
-  }
-
   type SecTarifasType {
     nombre: String,
-    precio: String,
+    precio: Int,
     descripcion: String
   }
 
   input SecTarifasInput {
     nombre: String,
-    precio: String,
+    precio: Int,
     descripcion: String
   }
 
@@ -79,6 +60,16 @@ const tiposSubBase = gql `
   input SecImagenesInput {
     nombre: String,
     url: String
+  }
+
+  type TipoType {
+    categoria: String,
+    icono: String
+  }
+
+  input TipoInput {
+    categoria: String,
+    icono: String
   }
 
   type EstadoType {

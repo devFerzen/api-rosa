@@ -31,11 +31,11 @@ const app = express();
 /*morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :status " +"Con un tiempo de :total-time[2] milliseconds...");
 app.use(morgan('custom'));*/
 
-// Token Bearer Authorization
+// Automated verify Token Bearer Authorization
 app.use(expressJwt({
     secret: "envPassSecret",
     algorithms: ["HS256"],
-    credentialsRequired: false
+    credentialsRequired: true
 }));
 
 // Apollo Server
@@ -48,7 +48,8 @@ const apolloContext = ({ req, res }) => ({
 // http://localhost:3000/graphql
 const server = new ApolloServer({
     schema: applyMiddleware(
-        graphqlSchema
+        graphqlSchema,
+        permissions
     ),
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext
