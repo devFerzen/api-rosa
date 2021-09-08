@@ -5,7 +5,7 @@ module.exports = {
                 return await Models.Paquete.find({ estado: true })
             } catch (error) {
                 console.dir(err)
-                throw new Error(err);
+                return new Error(err);
             }
         }
     },

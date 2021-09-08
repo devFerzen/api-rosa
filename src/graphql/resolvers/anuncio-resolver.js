@@ -2,7 +2,6 @@ import QueryAnuncio from '../../utilities/queryAnuncio'
 import UsuarioClass from '../../utilities/Usuario'
 import { crearBitacoraCreaciones, crearVerificacionAnuncio, crearBitacoraBusquedas } from '../../utilities/bitacoras'
 
-
 module.exports = {
     Query: {
         queryAnunciosById: async(_, { ids }, { Models }) => {
@@ -10,7 +9,7 @@ module.exports = {
                 return await Models.Anuncio.find({ _id: { $in: ids } })
             } catch (error) {
                 console.dir(err)
-                throw new Error(err);
+                return new Error(err);
             }
         },
         // Falta agregarle la projection, para solo traer especificamente esos datos
@@ -21,7 +20,7 @@ module.exports = {
                 return result;
             } catch (err) {
                 console.dir(err)
-                throw new Error(err);
+                return new Error(err);
             }
         }
     },
@@ -37,7 +36,15 @@ module.exports = {
                     .exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
+                return new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
+            }
+
+            if(!ResultadoUsuario){
+                return new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
+            }
+
+            if(!ResultadoUsuario.estado){
+                return new Error('anuncioCreacion: Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
@@ -45,14 +52,14 @@ module.exports = {
 
             if (!ResultadoUsuario.numero_telefonico_verificado) {
                 let result = await Usuario.verificacionNuevaCelular().catch(err => {
-                    throw new Error(`anuncioCreacion: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                    return new Error(`anuncioCreacion: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
                 Usuario.enviandoCorreo().then(resolved => {
                     console.log(`${resolved.mensaje}: Nueva verificación de celular`);
                 });
                 //Hacer el return en homologación con respuesta, cuando no regrese el resultado esperado. { resultX, RespuestaRedirección/Mensaje/Error}
-                throw new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
+                return new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
             }
 
             //Usuario con el numero_telefonico_verificado
@@ -64,7 +71,7 @@ module.exports = {
                 .catch(
                     err => {
                         console.dir(err);
-                        throw new Error('creacionAnuncio: Error en el salvado del anuncio!');
+                        return new Error('creacionAnuncio: Error en el salvado del anuncio!');
                     }
                 );
 
@@ -74,7 +81,7 @@ module.exports = {
                 .catch(
                     err => {
                         console.dir(err);
-                        throw new Error('creacionAnuncio: Error en la actualización del Usuario!');
+                        return new Error('creacionAnuncio: Error en la actualización del Usuario!');
                     }
                 );
 
@@ -103,11 +110,11 @@ module.exports = {
                 ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(input.id, input, { timestamps: false, new: true }).lean().exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error("anuncioActualizacion: Posible error en el id brindado!");
+                return new Error("anuncioActualizacion: Posible error en el id brindado!");
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('anuncioActualizacion: Anuncio no encontrado');
+                return new Error('anuncioActualizacion: Anuncio no encontrado');
             }
 
             return "Éxito";
@@ -117,25 +124,28 @@ module.exports = {
           anuncioEliminacion: 
         */
         async anuncioEliminacion(parent, { id_anuncio }, { Models, user }) {
-            let ResultadoAnuncio;
-
+            let ResultadoAnuncio, ResultadoUsuario;
             try {
                 ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio).lean().exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error(err);
+                return new Error(err);
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error("El anuncio proporcionado no fue encontrado.");
+                return new Error("El anuncio proporcionado no fue encontrado.");
             }
 
             if (user['http://localhost:3000/graphql'].id != ResultadoAnuncio.id_usuario) {
-                throw new Error("No cuentas con los permisos suficientes de eliminar este anuncio.");
+                return new Error("No cuentas con los permisos suficientes de eliminar este anuncio.");
             }
 
             //caso contrario usar callback para
-            Models.Anuncio.findByIdAndRemove(id_anuncio).lean().exec();
+            await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
+            
+            ResultadoUsuario = await Models.Usuario.findById(ResultadoAnuncio.id_usuario).exec();
+            ResultadoUsuario.anuncios_usuario = ResultadoUsuario.anuncios_usuario.splice(1,0,id_anuncio);
+            ResultadoUsuario.save();
 
             return "Éxito";
         },
@@ -150,17 +160,17 @@ module.exports = {
                 ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_corazones').exec()
             } catch (error) {
                 console.dir(err);
-                throw new Error("likeAnuncio: Posible error en el id brindado!");
+                return new Error("likeAnuncio: Posible error en el id brindado!");
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('likeAnuncio: Error al encontrar el Anuncio');
+                return new Error('likeAnuncio: Error al encontrar el Anuncio');
             }
 
             ResultadoAnuncio.no_corazones++;
             await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
                 console.dir(err);
-                throw new Error('likeAnuncio: error en el save');
+                return new Error('likeAnuncio: error en el save');
             });
             return "Éxito!";
         },
@@ -175,17 +185,17 @@ module.exports = {
                 ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_vistas').exec()
             } catch (error) {
                 console.dir(err);
-                throw new Error("anuncioVista: Posible error en el id brindado!");
+                return new Error("anuncioVista: Posible error en el id brindado!");
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('anuncioVista: Error al encontrar el Anuncio');
+                return new Error('anuncioVista: Error al encontrar el Anuncio');
             }
 
             ResultadoAnuncio.no_vistas++;
             await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
                 console.dir(err);
-                throw new Error('anuncioVista: error en el save');
+                return new Error('anuncioVista: error en el save');
             });
             return "Éxito!";
         },
@@ -200,18 +210,18 @@ module.exports = {
                 ResultadoUsuario = await Models.Usuario.findById(input.id_usuario, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
-                throw new Error(`solicitarVerificacionCelular: Error en la búsqueda!`);
+                return new Error(`anuncioSolicitarVerificacion: Error en la búsqueda!`);
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('solicitarVerificacionCelular: Usuario no existe!');
+                return new Error('anuncioSolicitarVerificacion: Usuario no existe!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
             Usuario = new usuarioClass(ResultadoUsuario);
             result = await Usuario.verificacionNuevaCelular().catch(err => {
                 console.dir(err)
-                throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                return new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
             });
 
             Usuario.enviandoCorreo().then(resolved => {
@@ -237,19 +247,28 @@ module.exports = {
                 ResultadoUsuario = await Models.AnunciosEnVerificacion.findById(input.id_verificacion).exec();
             } catch (error) {
                 console.dir(err);
-                throw new Error("anuncioResponderVerificacion: Posible error en el id brindado!");
+                return new Error("anuncioResponderVerificacion: Posible error en el id brindado!");
             }
 
             if (!ResultadoUsuario) {
-                throw new Error("anuncioResponderVerificacion: Usuario no se encontro");
+                return new Error("anuncioResponderVerificacion: Usuario no se encontro");
             }
+
+            const activationDate = new Date();
+            const hoyEs = new Date(activationDate.getUTCFullYear(),
+                            activationDate.getUTCMonth(),
+                            activationDate.getUTCDate(),
+                            activationDate.getUTCHours(),
+                            activationDate.getUTCMinutes(),
+                            activationDate.getUTCSeconds()
+                            );
 
             ResultadoUsuario.respuesta = input.respuesta;
             ResultadoUsuario.comentario = input.comentario;
-            ResultadoUsuario.fecha_respuesta = "2021-08-25";
+            ResultadoUsuario.fecha_respuesta = hoyEs;
             await ResultadoUsuario.save().catch(err => {
                 console.log("anuncioResponderVerificacion: error en el save!");
-                throw new Error('anuncioVista: error en el save');
+                return new Error('anuncioVista: error en el save');
             });
 
             return "Éxito Verificación!";

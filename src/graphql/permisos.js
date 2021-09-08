@@ -7,38 +7,41 @@ function checkPermission(user, permiso) {
     return false;
 }
 
-const isAuthenticated = rule({ cache: 'contextual' })((parent, args, { user }) => {
-    return user !== null;
+const usuarioConAutoridad = rule({ cache: 'no_cache' })((parent, args, { user }) => {
+  return user !== null;
 });
 
-const freepass = rule({ cache: 'contextual' })((parent, args, { user }) => {
+const paseLibre = rule({ cache: 'contextual' })((parent, args, { user }) => {
     return true;
 });
 
-export default shield({
+export default shield(
+  {
     Query: {
         //test: or(and(canReadOwnUser, isReadingOwnUser), canReadAnyUser),
         //Usuario
-        queryUsuarioById: freepass,
+        queryUsuarioById: paseLibre,
         //Anuncio
-        queryAnuncios: freepass
+        queryAnuncios: paseLibre
     },
     Mutation: {
         //Usuario
-        inicioSesion: freepass,
-        registroUsuario: freepass,
-        actualizacionContrasena: isAuthenticated,
-        solicitarVerificacionCelular: freepass,
-        compararVerificacionCelular: freepass,
-        solicitarRestablecerContrasena: freepass,
-        compararVerificacionUsuario: freepass,
-        restablecerContrasena: freepass,
+        inicioSesion: paseLibre,
+        registroUsuario: paseLibre,
+        actualizacionContrasena: usuarioConAutoridad,
+        compararVerificacionCelular: paseLibre,
+        solicitarRestablecerContrasena: paseLibre,
+        compararVerificacionUsuario: paseLibre,
+        restablecerContrasena: paseLibre,
         //Anuncio
-        anuncioCreacion: isAuthenticated,
-        anuncioActualizacion: isAuthenticated,
-        anuncioEliminacion: isAuthenticated,
-        anuncioSolicitarVerificacion: isAuthenticated,
-        anuncioResponderVerificacion: isAuthenticated
-
+        anuncioCreacion: usuarioConAutoridad,
+        anuncioActualizacion: usuarioConAutoridad,
+        anuncioEliminacion: usuarioConAutoridad,
+        anuncioSolicitarVerificacion: usuarioConAutoridad,
+        anuncioResponderVerificacion: usuarioConAutoridad
     }
-});
+  },
+  {
+    fallbackError: new Error('Estas presentando un error en el sistema, favor de contactar a servicio al cliente!')
+  }
+);

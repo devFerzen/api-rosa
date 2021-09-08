@@ -3,7 +3,7 @@ const tiposBase = gql `
   scalar Date
 
   type UsuarioType {
-    token: String!,
+    token: String,
     usuario: String,
     contrasena: String,
     numero_telefonico: String,
@@ -14,15 +14,15 @@ const tiposBase = gql `
     terminos_condiciones: Boolean,
     max_updates: Int,
     max_intentos: Int,
-    codigo_verificacion_celular: String!,
-    codigo_verificacion_usuario: String!,
+    codigo_verificacion_celular: String,
+    codigo_verificacion_usuario: String,
     estado: Boolean
   }
 
   input UsuarioInput {
-    usuario: String!,
-    contrasena: String!,
-    numero_telefonico: String!,
+    usuario: String,
+    contrasena: String,
+    numero_telefonico: String,
     numero_telefonico_verificado: Boolean,
     Ubicacion_Usuario: UbicacionUsuarioInput,
     Default_Contactos: SecContactoInput,

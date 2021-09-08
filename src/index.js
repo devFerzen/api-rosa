@@ -48,8 +48,8 @@ const apolloContext = ({ req, res }) => ({
 // http://localhost:3000/graphql
 const server = new ApolloServer({
     schema: applyMiddleware(
-        graphqlSchema
-        //AFSS: Hace que no muestre los errores y pone not authorised permissions
+        graphqlSchema,
+        permissions//AFSS: Hace que no muestre los errores y pone not authorised
     ),
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext
