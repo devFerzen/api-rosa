@@ -32,18 +32,18 @@ module.exports = {
             let ResultadoUsuario, usuarioClass, Usuario;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(id_usuario, { 'max_updates': 1, 'codigo_verificacion': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
+                ResultadoUsuario = await Models.Usuario.findById(id_usuario, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
                     .exec();
             } catch (err) {
                 console.dir(err);
                 throw new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
             }
 
-            if(!ResultadoUsuario){
+            if (!ResultadoUsuario) {
                 throw new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
             }
 
-            if(!ResultadoUsuario.estado){
+            if (!ResultadoUsuario.estado) {
                 throw new Error('anuncioCreacion: Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente!');
             }
 
@@ -142,9 +142,9 @@ module.exports = {
 
             //caso contrario usar callback para
             await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
-            
+
             ResultadoUsuario = await Models.Usuario.findById(ResultadoAnuncio.id_usuario).exec();
-            ResultadoUsuario.anuncios_usuario = ResultadoUsuario.anuncios_usuario.splice(1,0,id_anuncio);
+            ResultadoUsuario.anuncios_usuario = ResultadoUsuario.anuncios_usuario.splice(1, 0, id_anuncio);
             ResultadoUsuario.save();
 
             return "Éxito";
@@ -256,12 +256,12 @@ module.exports = {
 
             const activationDate = new Date();
             const hoyEs = new Date(activationDate.getUTCFullYear(),
-                            activationDate.getUTCMonth(),
-                            activationDate.getUTCDate(),
-                            activationDate.getUTCHours(),
-                            activationDate.getUTCMinutes(),
-                            activationDate.getUTCSeconds()
-                            );
+                activationDate.getUTCMonth(),
+                activationDate.getUTCDate(),
+                activationDate.getUTCHours(),
+                activationDate.getUTCMinutes(),
+                activationDate.getUTCSeconds()
+            );
 
             ResultadoUsuario.respuesta = input.respuesta;
             ResultadoUsuario.comentario = input.comentario;

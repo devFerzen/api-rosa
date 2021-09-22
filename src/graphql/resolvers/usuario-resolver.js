@@ -14,14 +14,14 @@ module.exports = {
         name: 'Date',
         description: 'Date custom scalar type',
         parseValue(value) {
-          const activationDate = new Date(value);
-          return new Date(activationDate.getUTCFullYear(),
-                          activationDate.getUTCMonth(),
-                          activationDate.getUTCDate(),
-                          activationDate.getUTCHours(),
-                          activationDate.getUTCMinutes(),
-                          activationDate.getUTCSeconds()
-                          );
+            const activationDate = new Date(value);
+            return new Date(activationDate.getUTCFullYear(),
+                activationDate.getUTCMonth(),
+                activationDate.getUTCDate(),
+                activationDate.getUTCHours(),
+                activationDate.getUTCMinutes(),
+                activationDate.getUTCSeconds()
+            );
             // value from the client
         },
         serialize(value) {
@@ -31,12 +31,12 @@ module.exports = {
             if (ast.kind === Kind.INT) { // ast value is always in string format
                 const activationDate = new Date(+ast.value);
                 return new Date(activationDate.getUTCFullYear(),
-                          activationDate.getUTCMonth(),
-                          activationDate.getUTCDate(),
-                          activationDate.getUTCHours(),
-                          activationDate.getUTCMinutes(),
-                          activationDate.getUTCSeconds()
-                          );
+                    activationDate.getUTCMonth(),
+                    activationDate.getUTCDate(),
+                    activationDate.getUTCHours(),
+                    activationDate.getUTCMinutes(),
+                    activationDate.getUTCSeconds()
+                );
             }
             return null;
         },
@@ -137,7 +137,7 @@ module.exports = {
         },
 
         /*
-          actualizacionContrasena: Actualización que se hace dentro de la sesion del usuario.
+          actualizacionContrasena: Actualización de contraseña que se hace dentro de una sesion del usuario.
         */
         async actualizacionContrasena(parent, { contrasenaVieja, contrasenaNueva }, { Models, user }) {
             let ResultadoUsuario, Usuario, comparacionContrasenas, result;
@@ -162,7 +162,7 @@ module.exports = {
                 // nueva verificacion ** Pendiente bloqueo de usuario
                 let result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`actualizacionContrasena: ${err.mensaje}`);
                     });
 
                 Usuario.enviandoCorreo().then(
@@ -170,10 +170,10 @@ module.exports = {
                         console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                     },
                     err => {
-                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`actualizacionContrasena: ${err.mensaje}`);
                     }
                 );
-                throw new Error(`compararVerificacionUsuario: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(`actualizacionContrasena: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
             }
 
             //Comparaciones de contrasenas
@@ -199,8 +199,8 @@ module.exports = {
         },
 
         /*
-        compararVerificacionCelular: Compara el código de verificación de celular y permitirá
-        crear anuncios ahora
+            compararVerificacionCelular: Compara el código de verificación de celular creado la primera vez que quizo
+            crear un anuncio.
          */
         async compararVerificacionCelular(parent, { input, id_usuario }, { Models }) {
             let ResultadoUsuario, Usuario, result, usuarioClass;
@@ -243,7 +243,7 @@ module.exports = {
 
             if (ResultadoUsuario.codigo_verificacion_celular !== input) {
                 Usuario.verificacionCelularNuevoIntento();
-                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
+                throw new Error(`compararVerificacionCelular: Código de verificación incorrecto!`);
             }
 
             result = await Usuario.verificarCelularUsuario().catch(err => {
@@ -254,7 +254,8 @@ module.exports = {
         },
 
         /*
-          solicitarRestablecerContraseña: Manda una verificación usuario
+          solicitarRestablecerContraseña 1: Manda un código de verificación USUARIO por correo, en el 
+          cuál deberá proporcionarlo para habilitar cambiar la contraseña
          */
         async solicitarRestablecerContrasena(parent, { usuario }, { Models }) {
             let ResultadoUsuario, result, usuarioClass, Usuario;
@@ -275,7 +276,7 @@ module.exports = {
 
             result = await Usuario.verificacionNuevoUsuario()
                 .catch(err => {
-                    throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                    throw new Error(`solicitarRestablecerContrasena: ${err.mensaje}`);
                 });
 
             Usuario.enviandoCorreo().then(
@@ -283,7 +284,7 @@ module.exports = {
                     console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                 },
                 err => {
-                    throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                    throw new Error(`solicitarRestablecerContrasena: ${err.mensaje}`);
                 }
             );
 
@@ -291,8 +292,7 @@ module.exports = {
         },
 
         /*
-          compararVerificacionUsuario: Compara el código de verificación de Usuario para que el front
-          pueda renderizar la vista para la actualización de la contraseña
+          compararVerificacionUsuario 2: Compara el código de verificación USUARIO mandado al usuario por correo
          */
         async compararVerificacionUsuario(parent, { input, usuario }, { Models }) {
             let ResultadoUsuario, usuarioClass, Usuario, result;
@@ -360,7 +360,7 @@ module.exports = {
         },
 
         /*
-          restablecerContrasena: Guarda una nueva contrasena dada por el usuario
+          restablecerContrasena 3: Guarda una nueva contrasena dada por el usuario
          */
         async restablecerContrasena(parent, { input, usuario, contrasena }, { Models }) {
             let ResultadoUsuario, Usuario, result;
