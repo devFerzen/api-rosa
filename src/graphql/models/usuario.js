@@ -1,10 +1,14 @@
 import {Schema, model} from 'mongoose';
 
 let correoRegexp = /.+\@.+\..+/;
+
 const DefaultContactoSchema = new Schema({
   _id:false,
-  tipo: { type: String },
-  url: { type: String }
+  Tipo: { 
+    categoria: { type: String, default:undefined },
+    icono: { type: String, default:undefined }
+   },
+  contacto: { type: String }
 });
 
 const usuarioSchema = new Schema(
@@ -15,12 +19,12 @@ const usuarioSchema = new Schema(
     numero_telefonico_verificado: { type: Boolean, default: false },
     Ubicacion_Usuario: {
       pais: { type: String, default: 'México'},
-      estado: { type: String, required: true },
-      ciudad: { type: String, required: true },
+      estado: { type: String },
+      ciudad: { type: String },
       ip: { type: String }
     },
-    Default_Contactos: { type: [DefaultContactoSchema], default: undefined },
-    anuncios_usuario: [ {type: [String], default: undefined } ],
+    Default_Contactos: { type: [DefaultContactoSchema] },
+    anuncios_usuario: [ {type: [String] } ],
     terminos_condiciones: { type: Boolean, default: true },
     max_intentos: { type: Number, default: 0},
     max_updates: { type: Number, default: 0},

@@ -8,6 +8,7 @@ import graphqlSchema from './graphql/schema';
       graphql-tools se analizará después al corto, quizás mediano plazo
       no traerá complicaciones. (express-jwt quizás es el usa este método)
 */
+import cors from 'cors';
 import permissions from './graphql/permisos';
 import mongoose from 'mongoose';
 import config from 'config';
@@ -26,6 +27,12 @@ mongoose.connect(`${config.mongoUrl}`, {
 //Server and env Config
 const port = process.env.PORT || 3000;
 const app = express();
+
+app.use(cors({
+  origin: true,
+  credentials: true,
+  maxAge: 3600
+ }));
 
 //Http console logs
 /*morgan.token("custom", "Nuevo :method request meje de :url ...(*.*) Estatus de :status " +"Con un tiempo de :total-time[2] milliseconds...");

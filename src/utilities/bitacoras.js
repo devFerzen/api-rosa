@@ -20,10 +20,7 @@ export const crearBitacoraCreaciones = (DataBitacora, conteoEn) => {
     const activationDate = new Date();
     const hoyEs = new Date(activationDate.getUTCFullYear(),
                             activationDate.getUTCMonth(),
-                            activationDate.getUTCDate(),
-                            activationDate.getUTCHours(),
-                            activationDate.getUTCMinutes(),
-                            activationDate.getUTCSeconds()
+                            activationDate.getUTCDate()
                             );
 
     Models.BitacoraCreaciones.updateOne({ "fecha_creacion": hoyEs }, {

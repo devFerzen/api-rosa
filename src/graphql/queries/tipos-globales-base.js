@@ -3,6 +3,7 @@ const tiposBase = gql `
   scalar Date
 
   type UsuarioType {
+    id: ID
     token: String,
     usuario: String,
     contrasena: String,
@@ -32,6 +33,7 @@ const tiposBase = gql `
   }
 
   type AnuncioType {
+    id: ID
     categorias: [String],
     permisos: [String],
     Sec_Descripcion: SecDescripcionType,

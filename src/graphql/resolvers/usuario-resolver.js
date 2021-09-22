@@ -48,7 +48,7 @@ module.exports = {
                 return result;
             } catch (err) {
                 console.dir(err)
-                return new Error(err);
+                throw new Error(err);
             }
         }
     },
@@ -61,21 +61,21 @@ module.exports = {
             let UsuarioLoggeado, Usuario, comparacionContrasenas;
             let usuarioClass = UsuarioClass.Usuario;
             try {
-                UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).exec();
+                UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).lean().exec();
             } catch (err) {
                 console.dir(err);
-                return new Error('Error en la búsqueda!')
+                throw new Error('Error en la búsqueda!')
             }
 
             if (!UsuarioLoggeado) {
-                return new Error('Usuario no existe!');
+                throw new Error('Usuario no existe!');
             }
             Usuario = new usuarioClass(UsuarioLoggeado);
 
             comparacionContrasenas = await bcrypt.compare(contrasena, UsuarioLoggeado.contrasena);
             if (!comparacionContrasenas) {
                 Usuario.verificacionUsuarioNuevoIntento();
-                return new Error('inicioSesion: Contraseña Incorrecta');
+                throw new Error('inicioSesion: Contraseña Incorrecta');
             }
 
             const { autorizacion_token } = creacionToken(UsuarioLoggeado);
@@ -101,36 +101,39 @@ module.exports = {
           registroUsuario: Registra un nuevo usuario.
         */
         async registroUsuario(parent, { input }, { Models }) {
+            //Pendiente Validación de inputs
+
             input.contrasena = await bcrypt.hash(input.contrasena, 10).catch(
                 err => {
-                    return new Error('registroUsuario: Error en la encriptacion');
                     console.dir(err);
+                    throw new Error('registroUsuario: Error en la encriptacion');
                 }
             );
 
-            const NuevoUsuario = new Models.Usuario(input);
-            await NuevoUsuario.save()
+            const NuevoUsuarioModel = new Models.Usuario(input);
+            let NuevoUsuario = await NuevoUsuarioModel.save()
                 .catch(
                     err => {
-                        return new Error(`registroUsuario: Error en la save ${err}`);
+                        throw new Error(`registroUsuario: Error en la save ${err}`);
                     }
                 );
 
-            const { autorizacion_token } = creacionToken(NuevoUsuario);
-            NuevoUsuario.token = autorizacion_token;
+            console.dir(NuevoUsuario);
+            const { autorizacion_token } = creacionToken(NuevoUsuarioModel);
+            NuevoUsuarioModel.token = autorizacion_token;
 
             const Bitacora = {
                 "Creacion": {
-                    "id_usuario": NuevoUsuario.id,
-                    "estado": NuevoUsuario.Ubicacion_Usuario.estado,
-                    "ciudad": NuevoUsuario.Ubicacion_Usuario.ciudad,
+                    "id_usuario": NuevoUsuarioModel.id,
+                    "estado": NuevoUsuarioModel.Ubicacion_Usuario.estado,
+                    "ciudad": NuevoUsuarioModel.Ubicacion_Usuario.ciudad,
                     "categorias": [],
                     "tipo": "Registro"
                 }
             };
             crearBitacoraCreaciones(Bitacora, 'count_registro');
 
-            return NuevoUsuario;
+            return NuevoUsuarioModel;
         },
 
         /*
@@ -145,11 +148,11 @@ module.exports = {
                 ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'contrasena': 1, 'max_intentos': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                return new Error("actualizacionContrasena: Posible error en el id brindado!");
+                throw new Error("actualizacionContrasena: Posible error en el id brindado!");
             }
 
             if (!ResultadoUsuario) {
-                return new Error("actualizacionContrasena: Usuario no se encontro");
+                throw new Error("actualizacionContrasena: Usuario no se encontro");
             }
 
             ResultadoUsuario.contrasenaNueva = contrasenaNueva;
@@ -159,7 +162,7 @@ module.exports = {
                 // nueva verificacion ** Pendiente bloqueo de usuario
                 let result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     });
 
                 Usuario.enviandoCorreo().then(
@@ -167,21 +170,21 @@ module.exports = {
                         console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                     },
                     err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     }
                 );
-                return new Error(`compararVerificacionUsuario: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(`compararVerificacionUsuario: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
             }
 
             //Comparaciones de contrasenas
             comparacionContrasenas = await bcrypt.compare(contrasenaVieja, ResultadoUsuario.contrasena);
             if (!comparacionContrasenas) {
                 Usuario.verificacionUsuarioNuevoIntento();
-                return new Error('actualizacionContrasena: Contraseña Incorrecta');
+                throw new Error('actualizacionContrasena: Contraseña Incorrecta');
             }
 
             result = await Usuario.guardandoContrasena({ 'max_intentos': 1 }).catch(err => {
-                return new Error(`actualizacionContrasena:  ${err.mensaje}`);
+                throw new Error(`actualizacionContrasena:  ${err.mensaje}`);
             });
 
             //Función de email
@@ -206,11 +209,11 @@ module.exports = {
                 ResultadoUsuario = await Models.Usuario.findById(id_usuario, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
-                return new Error(`compararVerificacionCelular: Error en la búsqueda!`);
+                throw new Error(`compararVerificacionCelular: Error en la búsqueda!`);
             }
 
             if (!ResultadoUsuario) {
-                return new Error('compararVerificacionCelular: Usuario no existe!');
+                throw new Error('compararVerificacionCelular: Usuario no existe!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
@@ -218,18 +221,18 @@ module.exports = {
 
             if (ResultadoUsuario.max_updates >= 3) {
                 let result = await Usuario.verificacionNuevaCelular().catch(err => {
-                    return new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                    throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
                 Usuario.enviandoCorreo().then(resolved => {
                     console.log(`${resolved.mensaje}: Nueva verificación de celular`);
                 });
-                return new Error(`compararVerificacionCelular: Haz excedido el limite de intentos su nueva verificación de celular ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(`compararVerificacionCelular: Haz excedido el limite de intentos su nueva verificación de celular ${result.mensaje} y enviado a su correo.!`);
             }
 
             if (!ResultadoUsuario.codigo_verificacion_celular) {
                 await Usuario.verificacionNuevaCelular().catch(err => {
-                    return new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                    throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
                 Usuario.enviandoCorreo().then(resolved => {
@@ -240,11 +243,11 @@ module.exports = {
 
             if (ResultadoUsuario.codigo_verificacion_celular !== input) {
                 Usuario.verificacionCelularNuevoIntento();
-                return new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
+                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
             }
 
             result = await Usuario.verificarCelularUsuario().catch(err => {
-                return new Error(`compararVerificacionCelular: ${err.mensaje}`);
+                throw new Error(`compararVerificacionCelular: ${err.mensaje}`);
             });
 
             return result.mensaje;
@@ -260,11 +263,11 @@ module.exports = {
                     .exec();
             } catch (err) {
                 console.dir(err)
-                return new Error(`solicitarRestablecerContraseña: Error en la búsqueda!`);
+                throw new Error(`solicitarRestablecerContraseña: Error en la búsqueda!`);
             }
 
             if (!ResultadoUsuario) {
-                return new Error('solicitarRestablecerContraseña: Usuario no existe!');
+                throw new Error('solicitarRestablecerContraseña: Usuario no existe!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
@@ -272,7 +275,7 @@ module.exports = {
 
             result = await Usuario.verificacionNuevoUsuario()
                 .catch(err => {
-                    return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                    throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                 });
 
             Usuario.enviandoCorreo().then(
@@ -280,7 +283,7 @@ module.exports = {
                     console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                 },
                 err => {
-                    return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                    throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                 }
             );
 
@@ -297,11 +300,11 @@ module.exports = {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                return new Error("actualizacionContrasena: posible error en el id brindado!");
+                throw new Error("actualizacionContrasena: posible error en el id brindado!");
             }
 
             if (!ResultadoUsuario) {
-                return new Error('compararVerificacionUsuario: Usuario no existe!');
+                throw new Error('compararVerificacionUsuario: Usuario no existe!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
@@ -311,7 +314,7 @@ module.exports = {
                 // nueva verificacion
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     });
 
                 Usuario.enviandoCorreo().then(
@@ -319,7 +322,7 @@ module.exports = {
                         console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                     },
                     err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     }
                 );
 
@@ -329,7 +332,7 @@ module.exports = {
             if (!ResultadoUsuario.codigo_verificacion_usuario) {
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     });
 
                 Usuario.enviandoCorreo().then(
@@ -337,7 +340,7 @@ module.exports = {
                         console.log(`${resolved.mensaje}: Nueva verificación de celular`);
                     },
                     err => {
-                        return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     }
                 );
 
@@ -346,11 +349,11 @@ module.exports = {
 
             if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
                 Usuario.verificacionUsuarioNuevoIntento();
-                return new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
+                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
             }
 
             result = await Usuario.verificarUsuario().catch(err => {
-                return new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
             });
 
             return result.mensaje;
@@ -368,11 +371,11 @@ module.exports = {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'contrasena': 1, 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                return new Error("actualizacionContrasena: Posible error en el id brindado o Usuario no encontrado!");
+                throw new Error("actualizacionContrasena: Posible error en el id brindado o Usuario no encontrado!");
             }
 
             if (!ResultadoUsuario) {
-                return new Error("actualizacionContrasena: Usuario no se encontro");
+                throw new Error("actualizacionContrasena: Usuario no se encontro");
             }
 
             ResultadoUsuario.contrasenaNueva = contrasena;
@@ -388,14 +391,14 @@ module.exports = {
                         console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
                     },
                     err => {
-                        return new Error(`actualizacionContrasena: ${err.mensaje}`);
+                        throw new Error(`actualizacionContrasena: ${err.mensaje}`);
                     }
                 );
-                return new Error("No pudimos actualizar su contraseña correctamente, le enviaremos un código de verificación a sus cuentas!");
+                throw new Error("No pudimos actualizar su contraseña correctamente, le enviaremos un código de verificación a sus cuentas!");
             }
 
             result = await Usuario.guardandoContrasena().catch(err => {
-                return new Error(`actualizacionContrasena: ${err.mensaje}`);
+                throw new Error(`actualizacionContrasena: ${err.mensaje}`);
             });
 
             return `Contraseña actualizada ${result.mensaje}`;
