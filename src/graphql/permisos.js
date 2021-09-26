@@ -7,7 +7,8 @@ function checkPermission(user, permiso) {
     return false;
 }
 
-const usuarioConAutoridad = rule({ cache: 'no_cache' })((parent, args, { user }) => {
+const usuarioConAutoridad = rule({ cache: 'contextual' })((parent, args, { user }) => {
+  console.log(`Shield: user ${user}`);
   return user !== null;
 });
 
@@ -42,6 +43,6 @@ export default shield(
     }
   },
   {
-    fallbackError: new Error('Estas presentando un error en el sistema, favor de contactar a servicio al cliente!')
+    fallbackError: 'Estas presentando un error en el sistema, favor de contactar a servicio al cliente'
   }
 );

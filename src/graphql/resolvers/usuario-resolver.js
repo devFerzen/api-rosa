@@ -57,9 +57,11 @@ module.exports = {
         /*
           inicioSesion: 
         */
-        async inicioSesion(parent, { correo, contrasena }, { Models }) {
+        async inicioSesion(parent, { correo, contrasena }, { Models, res }) {
             let UsuarioLoggeado, Usuario, comparacionContrasenas;
             let usuarioClass = UsuarioClass.Usuario;
+            console.log("Res>>>>>>>>>>>>>>>>>>>>>>><<<");
+            console.dir(res);
             try {
                 UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).lean().exec();
             } catch (err) {
@@ -142,7 +144,7 @@ module.exports = {
         async actualizacionContrasena(parent, { contrasenaVieja, contrasenaNueva }, { Models, user }) {
             let ResultadoUsuario, Usuario, comparacionContrasenas, result;
             let usuarioClass = UsuarioClass.Usuario;
-
+            
             //busqueda de usuadio
             try {
                 ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'contrasena': 1, 'max_intentos': 1 }).exec();

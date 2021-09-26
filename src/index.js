@@ -30,7 +30,7 @@ const app = express();
 
 app.use(cors({
   origin: true,
-  credentials: true,
+  credentials: true,//credentials true afss: investigar más la apertura de credenciales con client
   maxAge: 3600
  }));
 
@@ -52,7 +52,6 @@ const apolloContext = ({ req, res }) => ({
     Models
 });
 
-// http://localhost:3000/graphql
 const server = new ApolloServer({
     schema: applyMiddleware(
         graphqlSchema,
@@ -61,6 +60,7 @@ const server = new ApolloServer({
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext
 });
+
 
 server.applyMiddleware({ app });
 app.listen(port, () => {
