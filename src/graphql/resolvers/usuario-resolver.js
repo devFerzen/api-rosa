@@ -60,10 +60,8 @@ module.exports = {
         async inicioSesion(parent, { correo, contrasena }, { Models, res }) {
             let UsuarioLoggeado, Usuario, comparacionContrasenas;
             let usuarioClass = UsuarioClass.Usuario;
-            console.log("Res>>>>>>>>>>>>>>>>>>>>>>><<<");
-            console.dir(res);
             try {
-                UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).lean().exec();
+                UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).exec();
             } catch (err) {
                 console.dir(err);
                 throw new Error('Error en la búsqueda!')
@@ -72,16 +70,40 @@ module.exports = {
             if (!UsuarioLoggeado) {
                 throw new Error('Usuario no existe!');
             }
-            Usuario = new usuarioClass(UsuarioLoggeado);
 
             comparacionContrasenas = await bcrypt.compare(contrasena, UsuarioLoggeado.contrasena);
             if (!comparacionContrasenas) {
+                if(UsuarioLoggeado.max_intentos >= 5){
+                    // nueva verificacion ** Pendiente bloqueo de usuario
+                    let result = await Usuario.verificacionNuevoUsuario()
+                        .catch(err => {
+                            throw new Error(`actualizacionContrasena: ${err.mensaje}`);
+                        });
+
+                    Usuario.enviandoCorreo().then(
+                        resolved => {
+                            console.log(`${resolved.mensaje}: Favor de verificar el código enviado a su correo!`);
+                        },
+                        err => {
+                            throw new Error(`actualizacionContrasena: ${err.mensaje}`);
+                        }
+                    );
+                    throw new Error(`actualizacionContrasena: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+                }
+                
                 Usuario.verificacionUsuarioNuevoIntento();
                 throw new Error('inicioSesion: Contraseña Incorrecta');
             }
 
             const { autorizacion_token } = creacionToken(UsuarioLoggeado);
             UsuarioLoggeado.token = autorizacion_token;
+
+            res.cookie('refresh-token', UsuarioLoggeado.token, {
+                    expire: 15 + Date.now(),
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV !== "development" //Investigar
+                }
+            );
 
             const Bitacora = {
                 "Creacion": {
@@ -138,6 +160,8 @@ module.exports = {
             return NuevoUsuarioModel;
         },
 
+
+
         /*
           actualizacionContrasena: Actualización de contraseña que se hace dentro de una sesion del usuario.
         */
@@ -182,6 +206,7 @@ module.exports = {
             comparacionContrasenas = await bcrypt.compare(contrasenaVieja, ResultadoUsuario.contrasena);
             if (!comparacionContrasenas) {
                 Usuario.verificacionUsuarioNuevoIntento();
+                console.log(`Error contrasenas incorrectas: contrasenaVieja ${contrasenaVieja}, contrasenaNueva ${contrasenaNueva}`);
                 throw new Error('actualizacionContrasena: Contraseña Incorrecta');
             }
 
@@ -354,11 +379,7 @@ module.exports = {
                 throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
             }
 
-            result = await Usuario.verificarUsuario().catch(err => {
-                throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
-            });
-
-            return result.mensaje;
+            return "Verificación de usuario con Éxito!";
         },
 
         /*
@@ -367,6 +388,7 @@ module.exports = {
         async restablecerContrasena(parent, { input, usuario, contrasena }, { Models }) {
             let ResultadoUsuario, Usuario, result;
             let usuarioClass = UsuarioClass.Usuario;
+            console.log("actualizacionContrasena...")
 
             //busqueda de usuadio
             try {

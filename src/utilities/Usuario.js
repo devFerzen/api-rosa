@@ -1,10 +1,12 @@
-import { Promise } from 'mongoose';
+import { Promise } from 'mongoose'
 import CodigoVerificacion from './codigoVerificacion'
-import bcrypt from 'bcrypt';
+
+import bcrypt from 'bcrypt'
 
 class Usuario {
     constructor(Usuario) {
         this.Usuario = Usuario;
+        console.log(Usuario);
     }
 
     //Pendiente bloquear usuario
@@ -29,21 +31,6 @@ class Usuario {
                 console.dir(err);
                 throw new Error(`Usuario verificacionUsuarioNuevoIntento: error en el update de max updates del usario ${id_usuario}`);
             });
-    }
-
-    verificarUsuario() {
-        return new Promise(async(resolved, reject) => {
-            this.Usuario.max_intentos = 0;
-            this.Usuario.codigo_verificacion_usuario = null;
-            const result = await this.Usuario.save()
-                .catch(err => {
-                    console.dir(err);
-                    reject({ "mensaje": "Usuario verificarUsuario: no se pudo actualizar el numero_telefonico_verificado!" });
-                });
-
-            resolved({ "mensaje": "Usuario verificado con éxtio!" });
-        });
-
     }
 
     verificacionNuevaCelular() {
@@ -98,7 +85,7 @@ class Usuario {
             if (PropiedadExtra.hasOwnProperty('max_intentos')) {
                 this.Usuario.max_intentos = 0;
             }
-            console.log(`contrasena nueva: ${this.Usuario.contrasenaNueva}`);
+            console.log(`guardandoContrasena... ${this.Usuario.contrasenaNueva}`);
 
             this.Usuario.contrasena = await bcrypt.hash(this.Usuario.contrasenaNueva, 10).catch(
                 err => {
@@ -125,7 +112,6 @@ class Usuario {
             reject({ "mensaje": "Error al enviar el correo" });
         });
     }
-
 
 }
 

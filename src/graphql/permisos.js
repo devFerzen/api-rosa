@@ -9,10 +9,13 @@ function checkPermission(user, permiso) {
 
 const usuarioConAutoridad = rule({ cache: 'contextual' })((parent, args, { user }) => {
   console.log(`Shield: user ${user}`);
+  console.dir(user);
   return user !== null;
 });
 
-const paseLibre = rule({ cache: 'contextual' })((parent, args, { user }) => {
+const paseLibre = rule()((parent, args, { user }) => {
+    console.log(`Shield: user ${user} debe ser null`);
+    console.dir(user);
     return true;
 });
 
@@ -43,6 +46,7 @@ export default shield(
     }
   },
   {
+    allowExternalErrors: true,
     fallbackError: 'Estas presentando un error en el sistema, favor de contactar a servicio al cliente'
   }
 );
