@@ -11,7 +11,7 @@ const tiposBase = gql `
     numero_telefonico_verificado: Boolean,
     Ubicacion_Usuario: UbicacionUsuarioType,
     Default_Contactos: SecContactoType,
-    anuncios_usuario: [String],
+    anuncios_usuario: [AnuncioType],
     terminos_condiciones: Boolean,
     max_updates: Int,
     max_intentos: Int,

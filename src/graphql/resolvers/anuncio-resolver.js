@@ -125,6 +125,8 @@ module.exports = {
         */
         async anuncioEliminacion(parent, { id_anuncio }, { Models, user }) {
             let ResultadoAnuncio, ResultadoUsuario;
+
+            //Se valida que sea el dueño del anuncio y se extrae la llamada en lean
             try {
                 ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio).lean().exec();
             } catch (err) {
@@ -140,11 +142,16 @@ module.exports = {
                 throw new Error("No cuentas con los permisos suficientes de eliminar este anuncio.");
             }
 
-            //caso contrario usar callback para
             await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
 
-            ResultadoUsuario = await Models.Usuario.findById(ResultadoAnuncio.id_usuario).exec();
-            ResultadoUsuario.anuncios_usuario = ResultadoUsuario.anuncios_usuario.splice(1, 0, id_anuncio);
+            //Encontrar el usuario y actualizar su lista de anuncios
+            ResultadoUsuario = await Models.Usuario.findById(ResultadoAnuncio.id_usuario, { 'anuncios_usuario': 1 }).exec();
+            let anunciosRestantes = ResultadoUsuario.anuncios_usuario.filter((value, index) => {
+                if (value.toString() !== id_anuncio) {
+                    return value;
+                }
+            });
+            ResultadoUsuario.anuncios_usuario = anunciosRestantes;
             ResultadoUsuario.save();
 
             return "Éxito";

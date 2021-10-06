@@ -17,7 +17,7 @@ class Usuario {
             await this.Usuario.save()
                 .catch(err => {
                     console.dir(err);
-                    reject({ "mensaje": "Error en el update del usario" });
+                    reject({ "mensaje": "Error en el update del usario verificación" });
                 });
 
             resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio" });

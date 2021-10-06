@@ -77,11 +77,11 @@ app.use((req, res, next) => {
 const server = new ApolloServer({
     schema: applyMiddleware(
         graphqlSchema,
-        permissions//AFSS: Hace que no muestre los errores y pone not authorised
+        permissions //AFSS: Hace que no muestre los errores y pone not authorised
     ),
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext
-});    
+});
 server.applyMiddleware({ app, cors: corsOption }); //overriding cors made by express https://stackoverflow.com/questions/54485239/apollo-server-express-cors-issue
 
 app.listen(port, () => {
