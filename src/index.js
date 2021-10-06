@@ -58,22 +58,16 @@ const apolloContext = ({ req, res }) => ({
     Models
 });
 
-/*
-//Silent refresh
-app.use(async (req, res, next) => {
+/*//Silent refresh
+app.use((req, res, next) => {
     const refreshToken = req.cookies['refresh-token'];
-    const token = req.headers['Authentication'];
-    const tokenData = "";
 
     //Si no existe el token state, busca el refresh token
     if(!req.user){
-        if(!token){
-            res.status(401).send();
-        }
-
-        console.log(refreshToken);
-
-        res.status(489).send();
+        console.log(refreshToken," llamada de regreso 489");
+        //se podrá devolver el token por aquí
+        res.status = 489;
+        return next()
     }
 
     console.log("Si existe la cookie refresh token: ", refreshToken);
