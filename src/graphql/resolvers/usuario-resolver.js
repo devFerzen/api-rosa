@@ -71,8 +71,11 @@ module.exports = {
                 throw new Error('Usuario no existe!');
             }
 
+
             comparacionContrasenas = await bcrypt.compare(contrasena, UsuarioLoggeado.contrasena);
             if (!comparacionContrasenas) {
+                UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
+                Usuario = new usuarioClass(UsuarioLoggeado);
                 if (UsuarioLoggeado.max_intentos >= 5) {
                     // nueva verificacion ** Pendiente bloqueo de usuario
                     let result = await Usuario.verificacionNuevoUsuario()
