@@ -42,9 +42,10 @@ class Usuario {
             await this.Usuario.save()
                 .catch(err => {
                     console.dir(err);
-                    reject({ mensaje: "error en el update en el usario" })
+                    reject({ mensaje: "verificacionNuevaCelular: Favor de intentar nuevamente o contactar a servicio al cliente!" });
+                    return;
                 });
-            resolved({ "mensaje": "con éxito" });
+            resolved({ mensaje: "con éxito" });
         });
 
     }
@@ -63,13 +64,13 @@ class Usuario {
             this.Usuario.max_updates = 0;
             this.Usuario.numero_telefonico_verificado = true;
             this.Usuario.codigo_verificacion_celular = null;
-            const result = await this.Usuario.save()
-                .catch(err => {
-                    reject({
-                        "mensaje": "verificarCelularUsuario: no se pudo actualizar el numero_telefonico_verificado!",
-                        "Error": err
-                    });
-                });
+            let result;
+
+            try {
+                result = await this.Usuario.save();
+            } catch (error) {
+                return reject({ "mensaje": error.mensaje });
+            }
 
             resolved({ "mensaje": "Usuario celular verificado con éxito!" });
         });
@@ -89,27 +90,35 @@ class Usuario {
 
             this.Usuario.contrasena = await bcrypt.hash(this.Usuario.contrasenaNueva, 10).catch(
                 err => {
-                    console.log("err**********************");
-                    reject({ "mensaje": "Error en la encriptacion" });
+                    return reject({ "mensaje": "Error en la encriptacion" });
                 }
             );
 
             await this.Usuario.save()
-                .catch(
-                    err => {
-                        console.dir(err);
-                        reject({ "mensaje": "Error al guardar la contraseña" });
-                    }
-                );
+            .catch(
+                err => {
+                    console.log("err**********************");
+                    console.dir(err);
+                    return reject({ "mensaje": "Error al guardar la contraseña" });
+                }
+            );
 
             resolved({ "mensaje": "con éxito" });
         });
     }
 
+    //Descripción de funcion
+    //Esta llamada que sea await para enviar otro error al front indicando que hubo un error al enviar, ekiz si no es await
+    //pq ya esta en un clousre de error
+    //Se esta testeando que si en su llamada ya termino con un error throw su catch ya no surtirá efecto
+    //tal vez si tengra que hacer un await ahí (Creo que no como quiera pasa el throw porque esta en el ciclo de nodejs)...
     async enviandoCorreo() {
-        return new Promise((resolved, reject) => {
+        return new Promise(async (resolved, reject) => {
+            //Esto no debe de aparecer porque la función temrino en un throw new Error
+            await setTimeout(() =>{
+                reject({ "mensaje": "enviandoCorreo: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!" });
+            },2000);
             resolved({ "mensaje": "Correo enviado" });
-            reject({ "mensaje": "Error al enviar el correo" });
         });
     }
 

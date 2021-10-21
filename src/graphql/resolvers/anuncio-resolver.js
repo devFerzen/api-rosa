@@ -55,10 +55,10 @@ module.exports = {
                     throw new Error(`anuncioCreacion: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
-                Usuario.enviandoCorreo().then(resolved => {
-                    console.log(`${resolved.mensaje}: Nueva verificación de celular`);
+                Usuario.enviandoCorreo()
+                .catch(err => {
+                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                 });
-                //Hacer el return en homologación con respuesta, cuando no regrese el resultado esperado. { resultX, RespuestaRedirección/Mensaje/Error}
                 throw new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
             }
 
@@ -208,40 +208,45 @@ module.exports = {
         },
 
         /*
-          anuncioSolicitarVerificacion: Se le asigna un código al usuario para pasar a verificar su identidad.
+          solicitarVerificacionCelular: Se le asigna un código al usuario para pasar a verificar su identidad.
         */
-        async anuncioSolicitarVerificacion(parent, { input }, { Models }) {
+        async solicitarVerificacionCelular(parent, params, { Models, user }) {
             let ResultadoUsuario, Usuario, result, usuarioClass;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(input.id_usuario, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
+                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
-                throw new Error(`anuncioSolicitarVerificacion: Error en la búsqueda!`);
+                throw new Error(`solicitarVerificacionCelular: Error en la búsqueda!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!`);
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('anuncioSolicitarVerificacion: Usuario no existe!');
+                throw new Error('solicitarVerificacionCelular: Usuario no existe!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!');
             }
 
             usuarioClass = UsuarioClass.Usuario;
             Usuario = new usuarioClass(ResultadoUsuario);
-            result = await Usuario.verificacionNuevaCelular().catch(err => {
+            result = await Usuario.verificacionNuevaCelular()
+            .catch(err => {
                 console.dir(err)
-                throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                throw new Error(`solicitarVerificacionCelular: ${err.mensaje}`);
             });
 
-            Usuario.enviandoCorreo().then(resolved => {
-                console.log(resolved.mensaje);
-            });
+            Usuario.enviandoCorreo()
+            .catch(err => {
+                throw new Error(`${err.mensaje}`);
+            });            
+
+            return `Solicitud de verificación fue creada con ${result.mensaje} y enviada a su correo!`;
+        },
+
+        async solicitarVerificacionAnuncio(parent, { id_anuncio, foto_anuncio}, { Models }){
 
             const BitacoraInfo = {
-                "id_anuncio": input.id_anuncio,
-                "foto_anuncio": input.foto_anuncio,
+                "id_anuncio": id_anuncio,
+                "foto_anuncio": foto_anuncio,
             };
             crearVerificacionAnuncio(BitacoraInfo);
-
-            return `Solicitud de verificación fue creada con ${result.mensaje}!`;
         },
 
         /*

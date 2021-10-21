@@ -41,7 +41,8 @@ export default shield(
         anuncioCreacion: usuarioConAutoridad,
         anuncioActualizacion: usuarioConAutoridad,
         anuncioEliminacion: usuarioConAutoridad,
-        anuncioSolicitarVerificacion: usuarioConAutoridad,
+        solicitarVerificacionCelular: usuarioConAutoridad,
+        solicitarVerificacionAnuncio: usuarioConAutoridad,
         anuncioResponderVerificacion: usuarioConAutoridad
     }
   },

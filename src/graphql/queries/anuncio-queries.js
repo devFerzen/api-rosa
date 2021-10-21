@@ -11,7 +11,8 @@ const anuncioQueries = gql `
     anuncioEliminacion(id_anuncio: String!): String!,
     anunciolike(idAnuncio: String!): String!,
     anuncioVista(idAnuncio: String!): String!,
-    anuncioSolicitarVerificacion(input: VerificacionInput!): String!,
+    solicitarVerificacionCelular: String!,
+    solicitarVerificacionAnuncio(id_anuncio: String!, foto_anuncio: String!): String!,
     anuncioResponderVerificacion(input: VerificacionInput!): String!
   }
 `;
