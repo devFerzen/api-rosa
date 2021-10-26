@@ -64,21 +64,21 @@ const apolloContext = ({ req, res }) => ({
 });
 
 let upload = multer({
-  dest: 'uploads/',
-  fileFilter: function(req, file, cb){
-    console.log('file filter...', file);
-    let ext = path.extname(file.originalname);
+    dest: 'uploads/',
+    fileFilter: function(req, file, cb) {
+        console.log('file filter...', file);
+        let mimetype = path.extname(file.mimetype);
 
-    if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
-      return callback(new Error('Only images are allowed'))
+        if (mimetype !== 'image/png' && mimetype !== 'image/jpeg' && mimetype !== 'image/gif') {
+            return cb(new Error('Only images are allowed'));
+        }
+        cb(null, true);
     }
-    cb(null, true);
-  }
 });
 
-app.post('/upload', upload.array('filePondImages',6), (req, res, next) => {
+app.post('/upload', upload.array('filePondImages', 6), (req, res, next) => {
     console.log(req.user);
-    console.log("app.post/upload->req.files:",req.files);
+    console.log("app.post/upload->req.files:", req.files);
     console.log("app.post/upload->req.body.objetoImagen:");
     console.dir(req.body);
     /*{ 
@@ -94,7 +94,7 @@ app.post('/upload', upload.array('filePondImages',6), (req, res, next) => {
     }*/
     //console.log("body upload", req.body); info extra dada en metadata
 
-    if(!req.files) {
+    if (!req.files) {
         const error = new Error("Something went mejeWrong");
         error.httpStatusCode = 400
         return next(error)
@@ -103,14 +103,16 @@ app.post('/upload', upload.array('filePondImages',6), (req, res, next) => {
     res.send([req.files[0].filename]);
 });
 
-app.get('/load/:anuncio', (req,res,next) =>{
-    console.log("app.get/load->nombre_werk",req.params.nombre_werk);
-    console.log("app.get/load->req.files",req.files);
-    console.log("app.get/load->req.body",req.body);
+app.get('/load', (req, res, next) => {
+    console.log("app.get/load->nombre_werk", req.params.nombre_werk);
+    console.log("app.get/load->req.files", req.files);
+    console.log("app.get/load->req.body", req.body);
 
     res.send("loaded!!!");
 });
 
+
+app.use('/uploads', express.static('uploads'));
 
 /*//Silent refresh
 app.use((req, res, next) => {
