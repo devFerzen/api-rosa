@@ -6,7 +6,7 @@ const anuncioQueries = gql `
 
   },
   type Mutation {
-    anuncioCreacion(input: AnuncioInput!, id_usuario: String!): AnuncioType!,
+    anuncioCreacion(input: AnuncioInput!): AnuncioType!,
     anuncioActualizacion(input: AnuncioInput!): String!,
     anuncioEliminacion(id_anuncio: String!): String!,
     anunciolike(idAnuncio: String!): String!,

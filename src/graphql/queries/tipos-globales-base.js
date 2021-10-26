@@ -104,5 +104,14 @@ const tiposBase = gql `
     verificado: Boolean,
     sexo: [String]
   }
+
+  input ContactanosInput {
+    correo: String,
+    asunto: String,
+    mensaje: String!,
+    anuncio: String,
+    respuesta: String,
+    fecha_respuesta: Date
+  }
 `;
 module.exports = tiposBase;

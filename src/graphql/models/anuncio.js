@@ -20,6 +20,7 @@ const tarifaSchema = new Schema({
 const imagenSchema = new Schema({
     _id: false,
     nombre: { type: String, default: undefined },
+    posicion: { type: Number, default: 0 },
     url: { type: String, default: undefined }
 });
 

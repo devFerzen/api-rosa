@@ -55,12 +55,14 @@ const tiposSubBase = gql `
 
   type SecImagenesType {
     nombre: String,
-    url: String
+    posicion: Int,
+    url: String,
   }
 
   input SecImagenesInput {
     nombre: String,
-    url: String
+    posicion: Int,
+    url: String,
   }
 
   type TipoType {

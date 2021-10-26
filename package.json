@@ -37,6 +37,7 @@
     "graphql-shield": "^7.5.0",
     "graphql-tools": "^7.0.5",
     "mongoose": "^5.12.15",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "multer": "^1.4.3"
   }
 }

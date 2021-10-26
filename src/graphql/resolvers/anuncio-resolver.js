@@ -28,11 +28,11 @@ module.exports = {
         /*
           anuncioCreacion: 
         */
-        async anuncioCreacion(parent, { input, id_usuario }, { Models }) {
+        async anuncioCreacion(parent, { input }, { Models, user }) {
             let ResultadoUsuario, usuarioClass, Usuario;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(id_usuario, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
+                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
                     .exec();
             } catch (err) {
                 console.dir(err);
@@ -63,13 +63,15 @@ module.exports = {
             }
 
             //Usuario con el numero_telefonico_verificado
+            console.dir(input);
             const AnuncioModel = new Models.Anuncio(input);
-            AnuncioModel.id_usuario = id_usuario;
+            AnuncioModel.id_usuario = user['http://localhost:3000/graphql'].id;
 
             //Salvando Anuncio
             let NuevoAnuncio = await AnuncioModel.save()
                 .catch(
                     err => {
+                        console.log("err save anuncio");
                         console.dir(err);
                         throw new Error('creacionAnuncio: Error en el salvado del anuncio!');
                     }
