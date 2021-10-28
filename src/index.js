@@ -63,13 +63,30 @@ const apolloContext = ({ req, res }) => ({
     Models
 });
 
+let storage = multer.diskStorage({
+destination: function(req, file, cb) {
+    console.log("file destination", file);
+    console.dir(JSON.parse(req.body.filePondImages));
+    console.log("dirName...",__dirname);
+
+    let uploadPath = path.join(__dirname, '..', 'uploads');
+
+    cb(null, uploadPath);
+  },
+  filename: function(req, file, cb) {
+    console.log("file");
+    console.dir(file);
+    cb(null, Date.now() + '-' +file.originalname );
+  },
+});
+
 let upload = multer({
     dest: 'uploads/',
+    storage: storage,
     fileFilter: function(req, file, cb) {
-        console.log('file filter...', file);
-        let mimetype = path.extname(file.mimetype);
+        let ext = path.extname(file.originalname);
 
-        if (mimetype !== 'image/png' && mimetype !== 'image/jpeg' && mimetype !== 'image/gif') {
+        if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
             return cb(new Error('Only images are allowed'));
         }
         cb(null, true);
@@ -77,7 +94,6 @@ let upload = multer({
 });
 
 app.post('/upload', upload.array('filePondImages', 6), (req, res, next) => {
-    console.log(req.user);
     console.log("app.post/upload->req.files:", req.files);
     console.log("app.post/upload->req.body.objetoImagen:");
     console.dir(req.body);
