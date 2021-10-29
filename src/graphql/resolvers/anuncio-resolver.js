@@ -56,9 +56,9 @@ module.exports = {
                 });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
                 throw new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
             }
 
@@ -107,9 +107,10 @@ module.exports = {
         */
         async anuncioActualizacion(parent, { input }, { Models, user }) {
             let ResultadoAnuncio;
+            console.log('anuncioActualizacion...');
 
             try {
-                ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(input.id, input, { timestamps: false, new: true }).lean().exec();
+                ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(input.id, { $set: input }, { timestamps: false, upsert: true, new: true }).lean().exec();
             } catch (err) {
                 console.dir(err);
                 throw new Error("anuncioActualizacion: Posible error en el id brindado!");
@@ -119,7 +120,9 @@ module.exports = {
                 throw new Error('anuncioActualizacion: Anuncio no encontrado');
             }
 
-            return "Éxito";
+            console.dir(ResultadoAnuncio);
+
+            return "Anuncio actualizado con éxito!";
         },
 
         /*
@@ -156,7 +159,7 @@ module.exports = {
             ResultadoUsuario.anuncios_usuario = anunciosRestantes;
             ResultadoUsuario.save();
 
-            return "Éxito";
+            return "Anuncio eliminado con éxito!";
         },
 
         /*
@@ -229,20 +232,20 @@ module.exports = {
             usuarioClass = UsuarioClass.Usuario;
             Usuario = new usuarioClass(ResultadoUsuario);
             result = await Usuario.verificacionNuevaCelular()
-            .catch(err => {
-                console.dir(err)
-                throw new Error(`solicitarVerificacionCelular: ${err.mensaje}`);
-            });
+                .catch(err => {
+                    console.dir(err)
+                    throw new Error(`solicitarVerificacionCelular: ${err.mensaje}`);
+                });
 
             Usuario.enviandoCorreo()
-            .catch(err => {
-                throw new Error(`${err.mensaje}`);
-            });            
+                .catch(err => {
+                    throw new Error(`${err.mensaje}`);
+                });
 
             return `Solicitud de verificación fue creada con ${result.mensaje} y enviada a su correo!`;
         },
 
-        async solicitarVerificacionAnuncio(parent, { id_anuncio, foto_anuncio}, { Models }){
+        async solicitarVerificacionAnuncio(parent, { id_anuncio, foto_anuncio }, { Models }) {
 
             const BitacoraInfo = {
                 "id_anuncio": id_anuncio,

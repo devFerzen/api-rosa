@@ -84,9 +84,9 @@ module.exports = {
                         });
 
                     Usuario.enviandoCorreo()
-                    .catch(err => {
-                        throw new Error("inicioSesion: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                    });
+                        .catch(err => {
+                            throw new Error("inicioSesion: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        });
                     throw new Error(`inicioSesion: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
                 }
 
@@ -98,7 +98,7 @@ module.exports = {
             UsuarioLoggeado.token = autorizacion_token;
 
             res.cookie('refresh-token', UsuarioLoggeado.token, {
-                expire: 15 + Date.now(),
+                expire: 60 + Date.now(),
                 httpOnly: true,
                 secure: process.env.NODE_ENV !== "development" //Investigar
             });
@@ -190,9 +190,9 @@ module.exports = {
                     });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("actualizacionContrasena: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("actualizacionContrasena: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
                 throw new Error(`actualizacionContrasena: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
             }
 
@@ -238,9 +238,9 @@ module.exports = {
                 });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
                 throw new Error(`compararVerificacionCelular: Haz excedido el limite de intentos su nueva verificación de celular ${result.mensaje} y enviado a su correo.!`);
             }
 
@@ -248,11 +248,11 @@ module.exports = {
                 await Usuario.verificacionNuevaCelular().catch(err => {
                     throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
-                
+
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
 
                 throw new Error("compararVerificacionCelular: Se le ha enviado una código de verificación a su correo, favor de verificarlo!");
             }
@@ -296,9 +296,9 @@ module.exports = {
                 });
 
             Usuario.enviandoCorreo()
-            .catch(err => {
-                throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-            });
+                .catch(err => {
+                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                });
 
             return `solicitarRestablecerContrasena: Su ${result.mensaje} y enviado a su correo, favor de validar!`;
         },
@@ -330,9 +330,9 @@ module.exports = {
                     });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
 
                 throw new Error(`Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
             }
@@ -344,9 +344,9 @@ module.exports = {
                     });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
 
                 throw new Error(`compararVerificacionUsuario: No cuenta con código de verificación, su ${result.mensaje}`);
             }
@@ -388,9 +388,9 @@ module.exports = {
                 });
 
                 Usuario.enviandoCorreo()
-                .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
-                });
+                    .catch(err => {
+                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    });
                 throw new Error("No pudimos actualizar su contraseña correctamente, le enviaremos un código de verificación a sus cuentas!");
             }
 

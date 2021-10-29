@@ -24,7 +24,7 @@ const tiposSubBase = gql `
   }
 
   input SecDescripcionInput {
-    titulo: String,
+    titulo: String!,
     estado: String!,
     ciudad: String!,
     descripcion: String,
