@@ -9,6 +9,7 @@ const anuncioQueries = gql `
     anuncioCreacion(input: AnuncioInput!): AnuncioType!,
     anuncioActualizacion(input: AnuncioInput!): String!,
     anuncioEliminacion(id_anuncio: String!): String!,
+    imagenEliminacion(input: String!): String!,
     anunciolike(idAnuncio: String!): String!,
     anuncioVista(idAnuncio: String!): String!,
     solicitarVerificacionCelular: String!,

@@ -94,8 +94,7 @@ let upload = multer({
 });
 
 app.post('/upload', upload.array('filePondImages', 6), (req, res, next) => {
-    console.log("app.post/upload->req.files:", req.files);
-    console.log("app.post/upload->req.body.objetoImagen:");
+    console.log("uploading file: ", req.files);
     console.dir(req.body);
     /*{ 
         Object explain
@@ -119,14 +118,18 @@ app.post('/upload', upload.array('filePondImages', 6), (req, res, next) => {
     res.send([req.files[0].filename]);
 });
 
-app.get('/load', (req, res, next) => {
-    console.log("app.get/load->nombre_werk", req.params.nombre_werk);
-    console.log("app.get/load->req.files", req.files);
-    console.log("app.get/load->req.body", req.body);
+app.post('/delete',(req, res, next) => {
+    console.log("uploading file: ", req.files);
+    console.dir(req.body);
 
-    res.send("loaded!!!");
+    if (!req.files) {
+        const error = new Error("Something went mejeWrong");
+        error.httpStatusCode = 400
+        return next(error)
+    }
+
+    res.send([req.files[0].filename]);
 });
-
 
 app.use('/uploads', express.static('uploads'));
 
