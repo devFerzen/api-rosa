@@ -6,7 +6,7 @@ import path from 'path';
 
 import fs from 'fs';
 import { promisify } from 'util';
-const unlinkAsync  = promisify(fs.unlink);
+const unlinkAsync = promisify(fs.unlink);
 
 module.exports = {
     Query: {
@@ -21,13 +21,16 @@ module.exports = {
         // Falta agregarle la projection, para solo traer especificamente esos datos
         queryAnuncios: async(_, { query }, { Models }) => {
             const Query = new QueryAnuncio(query);
+            let result;
+            console.log("queryAnuncios....");
             try {
-                let result = await Models.Anuncio.find(Query.queryLimpiada()).exec();
-                return result;
+                result = await Models.Anuncio.find(Query.queryLimpiada()).exec();
             } catch (err) {
                 console.dir(err)
                 throw new Error(err);
             }
+            console.dir(result);
+            return result;
         }
     },
     Mutation: {
@@ -170,12 +173,12 @@ module.exports = {
 
         async imagenEliminacion(parent, { input }, { Models, user }) {
             console.log("imagenEliminacion...");
-            
+
             try {
-                console.log("dirName...",__dirname);
+                console.log("dirName...", __dirname);
                 const uploadPath = path.join(__dirname, '../../..', 'uploads');
                 const fileLocation = path.resolve(uploadPath, input);
-                console.log("input ",input, "uploadPath", uploadPath, "fileLocation", fileLocation);
+                console.log("input ", input, "uploadPath", uploadPath, "fileLocation", fileLocation);
                 //que se traiga en su lista de imagenes de aunicio la imagen y que esa actualice y elimine tmb
                 await unlinkAsync(fileLocation);
             } catch (error) {

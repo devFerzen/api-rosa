@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 
 const generalQueries = gql `
      type Mutation {
-        nuevoContacto(input: ContactanosInput! ):String!
+        nuevoContactoCliente(input: ContactanosInput! ):String!
     }
 `;
 module.exports = generalQueries;
