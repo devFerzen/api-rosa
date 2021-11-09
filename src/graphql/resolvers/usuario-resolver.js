@@ -97,6 +97,9 @@ module.exports = {
             const { autorizacion_token } = creacionToken(UsuarioLoggeado);
             UsuarioLoggeado.token = autorizacion_token;
 
+            UsuarioLoggeado.max_intentos = 0;
+            UsuarioLoggeado.save();
+
             res.cookie('refresh-token', UsuarioLoggeado.token, {
                 expire: 60 + Date.now(),
                 httpOnly: true,
