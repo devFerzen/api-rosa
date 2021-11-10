@@ -25,5 +25,9 @@ module.exports = {
 
             return 'nuevoContactoCliente: Correo enviado con éxito!'
         },
+
+        async ddlsGenerales(parent, params, { Models }) {
+
+        }
     }
 }

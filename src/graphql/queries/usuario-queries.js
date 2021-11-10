@@ -9,7 +9,7 @@ const usuarioQueries = gql `
     registroUsuario(input: UsuarioInput!): UsuarioType!,
     actualizacionContrasena(contrasenaVieja: String!, contrasenaNueva: String!): String!,
     compararVerificacionCelular(input: String!):String!,
-    compararVerificacionUsuario(input: String!, usuario: String!):String!,
+    compararVerificacionUsuario(input: String!, usuario: String!, clean: Boolean!):String!,
     solicitarRestablecerContrasena( usuario: String! ):String!
     restablecerContrasena(input: String!, usuario: String!, contrasena: String!):String!,
   }

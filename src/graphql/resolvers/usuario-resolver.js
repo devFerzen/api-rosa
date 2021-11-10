@@ -7,8 +7,6 @@ import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 import sizeof from 'object-sizeof';
 
-
-
 module.exports = {
     Date: new GraphQLScalarType({
         name: 'Date',
@@ -60,47 +58,53 @@ module.exports = {
         async inicioSesion(parent, { correo, contrasena }, { Models, res }) {
             let UsuarioLoggeado, Usuario, comparacionContrasenas;
             let usuarioClass = UsuarioClass.Usuario;
+
             try {
                 UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).populate('anuncios_usuario').exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error('Error en la búsqueda!')
+                throw new Error(JSON.stringify({ mensaje: 'Error en la búsqueda!' }));
             }
 
             if (!UsuarioLoggeado) {
-                throw new Error('Usuario no existe!');
+                throw new Error(JSON.stringify({ mensaje: 'Usuario no existe!' }));
             }
 
+            //Cuenta con bloqueo
+            if (UsuarioLoggeado.codigo_verificacion_usuario != undefined) {
+                throw new Error(JSON.stringify({ mensaje: 'Haz excedido el limite de intentos favor de validar su correo!', pagina: 'home', componenteInterno: 'panelHerramientasVerificacion' }));
+            }
 
             comparacionContrasenas = await bcrypt.compare(contrasena, UsuarioLoggeado.contrasena);
             if (!comparacionContrasenas) {
                 UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
                 Usuario = new usuarioClass(UsuarioLoggeado);
                 if (UsuarioLoggeado.max_intentos >= 5) {
-                    // nueva verificacion ** Pendiente bloqueo de usuario
                     let result = await Usuario.verificacionNuevoUsuario()
                         .catch(err => {
-                            throw new Error(`inicioSesion: ${err.mensaje}`);
+                            throw new Error(JSON.stringify({ mensaje: err.mensaje }));
                         });
 
                     Usuario.enviandoCorreo()
                         .catch(err => {
-                            throw new Error("inicioSesion: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                            //AFSS: Se debe de dar mensaje de error en esta parte?
+                            throw new Error(JSON.stringify({ mensaje: err.mensaje }));
                         });
-                    throw new Error(`inicioSesion: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+
+                    throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`, pagina: 'home', componenteInterno: 'panelHerramientasVerificacion' }));
                 }
 
                 Usuario.verificacionUsuarioNuevoIntento();
-                throw new Error('inicioSesion: Contraseña Incorrecta');
+                throw new Error(JSON.stringify({ mensaje: `Contraseña Incorrecta! Te restan ${5 - UsuarioLoggeado.max_intentos} intentos.!` }));
             }
+
+            //Inicio de Sesión correcto
+            Models.Usuario.findByIdAndUpdate(UsuarioLoggeado._id, { $set: { 'max_intentos': 0, 'codigo_verificacion_usuario': null } }).lean().exec();
 
             const { autorizacion_token } = creacionToken(UsuarioLoggeado);
             UsuarioLoggeado.token = autorizacion_token;
 
-            UsuarioLoggeado.max_intentos = 0;
-            UsuarioLoggeado.save();
-
-            res.cookie('refresh-token', UsuarioLoggeado.token, {
+            res.cookie('refresh-token', autorizacion_token, {
                 expire: 60 + Date.now(),
                 httpOnly: true,
                 secure: process.env.NODE_ENV !== "development" //Investigar
@@ -120,7 +124,6 @@ module.exports = {
             //Ver el auth de vuemaster para ver si guardar en cookie esta bien
             return UsuarioLoggeado;
         },
-
 
         /*
           registroUsuario: Registra un nuevo usuario.
@@ -160,8 +163,6 @@ module.exports = {
 
             return NuevoUsuarioModel;
         },
-
-
 
         /*
           actualizacionContrasena: Actualización de contraseña que se hace dentro de una sesion del usuario.
@@ -265,6 +266,7 @@ module.exports = {
                 throw new Error(`compararVerificacionCelular: Código de verificación incorrecto!`);
             }
 
+            //Usuario verificado y update
             result = await Usuario.verificarCelularUsuario().catch(err => {
                 throw new Error(`compararVerificacionCelular: ${err.mensaje}`);
             });
@@ -309,7 +311,7 @@ module.exports = {
         /*
           compararVerificacionUsuario 2: Compara el código de verificación USUARIO mandado al usuario por correo
          */
-        async compararVerificacionUsuario(parent, { input, usuario }, { Models }) {
+        async compararVerificacionUsuario(parent, { input, usuario, clean }, { Models }) {
             let ResultadoUsuario, usuarioClass, Usuario, result;
             try {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
@@ -325,7 +327,7 @@ module.exports = {
             usuarioClass = UsuarioClass.Usuario;
             Usuario = new usuarioClass(ResultadoUsuario);
 
-            if (ResultadoUsuario.max_intentos >= 5) {
+            if (ResultadoUsuario.max_intentos >= 3) {
                 // nueva verificacion
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
@@ -340,6 +342,7 @@ module.exports = {
                 throw new Error(`Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
             }
 
+            //AFSS: Este pensamiento de generarle un codigo de verificación un usuario se me hace mala idea. Validar flujo
             if (!ResultadoUsuario.codigo_verificacion_usuario) {
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
@@ -356,9 +359,17 @@ module.exports = {
 
             if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
                 Usuario.verificacionUsuarioNuevoIntento();
-                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto!`);
+                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto! Te restan ${3 - ResultadoUsuario.max_intentos} intentos.!`);
             }
 
+            //agregar un input extra e si esta activo eliminar el codigo de verificacion, que pase por default false y solo
+            //en la accion de excederse del limite de 5 de inicio de sesion este lo mandará como verdaro
+            if (clean) {
+                Usuario.verificacionNuevoUsuario(true)
+                    .catch(err => {
+                        throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                    });
+            }
             return "Verificación de usuario con Éxito!";
         },
 
@@ -385,9 +396,11 @@ module.exports = {
             ResultadoUsuario.contrasenaNueva = contrasena;
             Usuario = new usuarioClass(ResultadoUsuario);
 
+            console.log("ResultadoUsuario.codigo_verificacion_usuario ", ResultadoUsuario.codigo_verificacion_usuario, " input", input);
+
             if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
-                Usuario.verificacionNuevoUsuario().then(result => {
-                    console.log(`restablecerContrasena: ${result.mensaje}`);
+                Usuario.verificacionNuevoUsuario().catch(err => {
+                    throw new Error(JSON.stringify({ mensaje: err.mensaje }));
                 });
 
                 Usuario.enviandoCorreo()
@@ -400,6 +413,11 @@ module.exports = {
             result = await Usuario.guardandoContrasena().catch(err => {
                 throw new Error(`restablecerContrasena: ${err.mensaje}`);
             });
+
+            Usuario.verificacionNuevoUsuario(true)
+                .catch(err => {
+                    throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                });
 
             return `Contraseña actualizada ${result.mensaje}`;
         }

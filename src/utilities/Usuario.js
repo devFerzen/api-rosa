@@ -10,10 +10,16 @@ class Usuario {
     }
 
     //Pendiente bloquear usuario
-    verificacionNuevoUsuario() {
+    verificacionNuevoUsuario(estaLoggeado = false) {
         return new Promise(async(resolved, reject) => {
+            console.log("verificacionNuevoUsuario...", estaLoggeado);
+
             this.Usuario.max_intentos = 0;
-            this.Usuario.codigo_verificacion_usuario = CodigoVerificacion.creacion();
+            this.Usuario.codigo_verificacion_usuario = null;
+            if (!estaLoggeado) {
+                this.Usuario.codigo_verificacion_usuario = CodigoVerificacion.creacion();
+            }
+
             await this.Usuario.save()
                 .catch(err => {
                     console.dir(err);
@@ -95,13 +101,13 @@ class Usuario {
             );
 
             await this.Usuario.save()
-            .catch(
-                err => {
-                    console.log("err**********************");
-                    console.dir(err);
-                    return reject({ "mensaje": "Error al guardar la contraseña" });
-                }
-            );
+                .catch(
+                    err => {
+                        console.log("err**********************");
+                        console.dir(err);
+                        return reject({ "mensaje": "Error al guardar la contraseña" });
+                    }
+                );
 
             resolved({ "mensaje": "con éxito" });
         });
@@ -113,11 +119,11 @@ class Usuario {
     //Se esta testeando que si en su llamada ya termino con un error throw su catch ya no surtirá efecto
     //tal vez si tengra que hacer un await ahí (Creo que no como quiera pasa el throw porque esta en el ciclo de nodejs)...
     async enviandoCorreo() {
-        return new Promise(async (resolved, reject) => {
+        return new Promise(async(resolved, reject) => {
             //Esto no debe de aparecer porque la función temrino en un throw new Error
-            await setTimeout(() =>{
+            await setTimeout(() => {
                 reject({ "mensaje": "enviandoCorreo: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!" });
-            },2000);
+            }, 2000);
             resolved({ "mensaje": "Correo enviado" });
         });
     }

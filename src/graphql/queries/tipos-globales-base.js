@@ -96,6 +96,24 @@ const tiposBase = gql `
     estado: Boolean
   }
 
+  type DdlGeneralType {
+    no_id: String,
+    descripcion: String,
+    icono_icono: String,
+    icono_categoria: String,
+    categoria: String,
+    estado: Boolean
+  }
+
+  input DdlGeneralInput {
+    no_id: String,
+    descripcion: String,
+    icono_icono: String,
+    icono_categoria: String,
+    categoria: String,
+    estado: Boolean
+  }
+
   input QueryAnuncioInput {
     buscar_por: String,
     categorias: [String],
