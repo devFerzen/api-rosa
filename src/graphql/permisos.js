@@ -34,13 +34,16 @@ export default shield(
         registroUsuario: paseLibre,
         actualizacionContrasena: usuarioConAutoridad,
         compararVerificacionCelular: paseLibre,
-        solicitarRestablecerContrasena: paseLibre,
         compararVerificacionUsuario: paseLibre,
+        solicitarRestablecerContrasena: paseLibre,
         restablecerContrasena: paseLibre,
         //Anuncio
         anuncioCreacion: usuarioConAutoridad,
         anuncioActualizacion: usuarioConAutoridad,
         anuncioEliminacion: usuarioConAutoridad,
+        imagenEliminacion:usuarioConAutoridad,
+        anunciolike:paseLibre,
+        anuncioVista:paseLibre,
         solicitarVerificacionCelular: usuarioConAutoridad,
         solicitarVerificacionAnuncio: usuarioConAutoridad,
         anuncioResponderVerificacion: usuarioConAutoridad

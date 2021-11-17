@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
 
 const ddlsGeneralSchema = new Schema({
-    no_id: { type: String, required: true, unique: true },
+    no_id: { type: String, required: true },
     descripcion: { type: String, required: true },
     icono_icono: { type: String },
     icono_categoria: { type: String },

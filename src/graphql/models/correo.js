@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 
 const correoSchema = new Schema(
   {
-    correo: { type: String, required: true },
+    correo: { type: String, default: undefined },
     asunto: { type: String, required: true },
     mensaje: { type: String, default: false },
     anuncio: { type: String, default: undefined },

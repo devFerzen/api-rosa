@@ -115,12 +115,12 @@ const tiposBase = gql `
   }
 
   input QueryAnuncioInput {
-    buscar_por: String,
-    categorias: [String],
-    estado: String,
-    ciudad: String,
-    verificado: Boolean,
-    sexo: [String]
+    busquedaBuscarPor: String,
+    busquedaCategorias: [String],
+    busquedaEstado: String,
+    busquedaCiudad: String,
+    busquedaVerificado: Boolean,
+    busquedaSexo: String
   }
 
   input ContactanosInput {

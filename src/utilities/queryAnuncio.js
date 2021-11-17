@@ -20,34 +20,37 @@ class QueryAnuncio {
         //Opciones por default
         Result['Estado.vivo'] = true;
 
-        if (this.hasOwnProperty('buscar_por')) {
-            Result['Sec_Descripcion.titulo'] = { '$regex': `.*${this.buscar_por}*.` }
+        if (this.hasOwnProperty('busquedaBuscarPor')) {
+            Result['Sec_Descripcion.titulo'] = { '$regex': `.*${this.busquedaBuscarPor}*.` }
         }
 
-        if (this.hasOwnProperty('estado')) {
-            Result['Sec_Descripcion.estado'] = { '$regex': `.*${this.estado}*.` }
+        if (this.hasOwnProperty('busquedaEstado')) {
+            Result['Sec_Descripcion.estado'] = { '$regex': `.*${this.busquedaEstado}*.` }
         }
 
-        if (this.hasOwnProperty('ciudad')) {
-            Result['Sec_Descripcion.ciudad'] = { '$regex': `.*${this.ciudad}*.` }
+        if (this.hasOwnProperty('busquedaCiudad')) {
+            Result['Sec_Descripcion.ciudad'] = { '$regex': `.*${this.busquedaCiudad}*.` }
         }
 
-        if (this.hasOwnProperty('sexo')) {
+        if (this.hasOwnProperty('busquedaSexo')) {
             Result['Sec_Descripcion.sexo'] = {
-                "$in": this.sexos
+                "$regex": this.busquedaSexo
             }
         }
 
-        if (this.hasOwnProperty('verificado')) {
+        if (this.hasOwnProperty('busquedaVerificado')) {
             Result['verificado'] = this.verificado;
         }
 
-        if (this.hasOwnProperty('categorias')) {
+        if (this.hasOwnProperty('busquedaCategorias')) {
+            //afss el input mongoose manda en que dar como tipo de data... entonces se usa solo this.NombreDeLaPropiedad con sus accesos en caso de tenerlos [0].NombredeOtraProp
             Result['categorias'] = {
-                "$in": this["categorias"]
+                "$in": this.busquedaCategorias
             }
         }
 
+        console.log("Query Limpiada");
+        console.dir(Result);
         return Result;
     }
 

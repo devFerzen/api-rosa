@@ -21,16 +21,17 @@ module.exports = {
         // Falta agregarle la projection, para solo traer especificamente esos datos
         queryAnuncios: async(_, { query }, { Models }) => {
             const Query = new QueryAnuncio(query);
-            let result;
-            console.log("queryAnuncios....");
+            let QueryLimpia = {};
+            let QueryResult;
+
             try {
-                result = await Models.Anuncio.find(Query.queryLimpiada()).exec();
+                QueryLimpia = Query.queryLimpiada();
+                QueryResult = await Models.Anuncio.find(QueryLimpia).exec();
             } catch (err) {
                 console.dir(err)
                 throw new Error(err);
             }
-            console.dir(result);
-            return result;
+            return QueryResult;
         }
     },
     Mutation: {
@@ -41,7 +42,7 @@ module.exports = {
             let ResultadoUsuario, usuarioClass, Usuario;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
+                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
                     .exec();
             } catch (err) {
                 console.dir(err);
@@ -60,12 +61,16 @@ module.exports = {
             Usuario = new usuarioClass(ResultadoUsuario);
 
             if (!ResultadoUsuario.numero_telefonico_verificado) {
+                //Agregar una forma de actualizar su telefono y su estado "numero_telefonico_verificado", por cambio de celular tal vez.
+
                 let result = await Usuario.verificacionNuevaCelular().catch(err => {
-                    throw new Error(`anuncioCreacion: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                    //Registrar este error de usuario para atenderlo despues
+                    throw new Error(`anuncioCreacion: Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente!`);
                 });
 
                 Usuario.enviandoCorreo()
                     .catch(err => {
+                        //Registrar este error de usuario para atenderlo
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
                 throw new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
