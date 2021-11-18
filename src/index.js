@@ -31,7 +31,7 @@ mongoose.connect(`${config.mongoUrl}`, {
     .catch(err => console.log("DB No se Conecto... (T.T)"));
 
 //Server and env Config
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 const app = express();
 
 const corsOption = {
@@ -64,20 +64,20 @@ const apolloContext = ({ req, res }) => ({
 });
 
 let storage = multer.diskStorage({
-destination: function(req, file, cb) {
-    console.log("file destination", file);
-    console.dir(JSON.parse(req.body.filePondImages));
-    console.log("dirName...",__dirname);
+    destination: function(req, file, cb) {
+        console.log("file destination", file);
+        console.dir(JSON.parse(req.body.filePondImages));
+        console.log("dirName...", __dirname);
 
-    let uploadPath = path.join(__dirname, '..', 'uploads');
+        let uploadPath = path.join(__dirname, '..', 'uploads');
 
-    cb(null, uploadPath);
-  },
-  filename: function(req, file, cb) {
-    console.log("file");
-    console.dir(file);
-    cb(null, Date.now() + '-' +file.originalname );
-  },
+        cb(null, uploadPath);
+    },
+    filename: function(req, file, cb) {
+        console.log("file");
+        console.dir(file);
+        cb(null, Date.now() + '-' + file.originalname);
+    },
 });
 
 let upload = multer({
@@ -86,7 +86,7 @@ let upload = multer({
     fileFilter: function(req, file, cb) {
         let ext = path.extname(file.originalname);
 
-        if(ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
+        if (ext !== '.png' && ext !== '.jpg' && ext !== '.gif' && ext !== '.jpeg') {
             return cb(new Error('Only images are allowed'));
         }
         cb(null, true);
@@ -118,7 +118,7 @@ app.post('/upload', upload.array('filePondImages', 6), (req, res, next) => {
     res.send([req.files[0].filename]);
 });
 
-app.post('/delete',(req, res, next) => {
+app.post('/delete', (req, res, next) => {
     console.log("uploading file: ", req.files);
     console.dir(req.body);
 
@@ -160,5 +160,5 @@ const server = new ApolloServer({
 server.applyMiddleware({ app, cors: corsOption }); //overriding cors made by express https://stackoverflow.com/questions/54485239/apollo-server-express-cors-issue
 
 app.listen(port, () => {
-    console.log(`Servidor en el puerto: ${port}...`);
+    console.log(`Servidor conectado => puerto: ${port}...`);
 });

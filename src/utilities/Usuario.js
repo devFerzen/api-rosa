@@ -1,5 +1,6 @@
 import { Promise } from 'mongoose'
 import CodigoVerificacion from './codigoVerificacion'
+import sgMail from '@sendgrid/mail'
 
 import bcrypt from 'bcrypt'
 
@@ -13,11 +14,12 @@ class Usuario {
     verificacionNuevoUsuario(estaLoggeado = false) {
         return new Promise(async(resolved, reject) => {
             console.log("verificacionNuevoUsuario...", estaLoggeado);
+            let codigoVerificacion = CodigoVerificacion.creacion();
 
             this.Usuario.max_intentos = 0;
             this.Usuario.codigo_verificacion_usuario = null;
             if (!estaLoggeado) {
-                this.Usuario.codigo_verificacion_usuario = CodigoVerificacion.creacion();
+                this.Usuario.codigo_verificacion_usuario = codigoVerificacion;
             }
 
             await this.Usuario.save()
@@ -26,7 +28,7 @@ class Usuario {
                     return reject({ "mensaje": "Error en el update del usario verificación" });
                 });
 
-            resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio" });
+            resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio", "data": codigoVerificacion });
         });
     }
 
@@ -41,8 +43,10 @@ class Usuario {
 
     verificacionNuevaCelular() {
         return new Promise(async(resolved, reject) => {
+            let codigoVerificacion = CodigoVerificacion.creacion();
+
             this.Usuario.max_updates = 0;
-            this.Usuario.codigo_verificacion_celular = CodigoVerificacion.creacion();
+            this.Usuario.codigo_verificacion_celular = codigoVerificacion;
             this.Usuario.numero_telefonico_verificado = false;
             //Este tipo de funciones devuelven el objeto, como hacer para que no lo haga y tal vez pueda ser más rápida
             await this.Usuario.save()
@@ -51,7 +55,7 @@ class Usuario {
                     reject({ mensaje: "verificacionNuevaCelular: Favor de intentar nuevamente o contactar a servicio al cliente!" });
                     return;
                 });
-            resolved({ mensaje: "con éxito" });
+            resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio", "data": codigoVerificacion });
         });
 
     }
@@ -113,17 +117,29 @@ class Usuario {
         });
     }
 
-    //Descripción de funcion
-    //Esta llamada que sea await para enviar otro error al front indicando que hubo un error al enviar, ekiz si no es await
-    //pq ya esta en un clousre de error
-    //Se esta testeando que si en su llamada ya termino con un error throw su catch ya no surtirá efecto
-    //tal vez si tengra que hacer un await ahí (Creo que no como quiera pasa el throw porque esta en el ciclo de nodejs)...
-    async enviandoCorreo() {
+    async enviandoCorreo(CorreoTemplate) {
         return new Promise(async(resolved, reject) => {
-            //Esto no debe de aparecer porque la función temrino en un throw new Error
-            await setTimeout(() => {
-                reject({ "mensaje": "enviandoCorreo: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!" });
-            }, 2000);
+            try {
+                console.dir("enviandoCorreo...");
+                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+                const msg = {
+                    to: 'alanferzen.ss@gmail.com',
+                    from: process.env.MY_SECRET_EMAIL,
+                    subject: 'Sending with Twilio SendGrid is Fun',
+                    templateId: CorreoTemplate.templateId,
+                    dynamicTemplateData: {
+                        mensaje: 'Meje variables!!',
+                        codigoVerificacion: CorreoTemplate.codigoVerificacion
+                    }
+                };
+
+                await sgMail.send(msg);
+            } catch (error) {
+                console.dir("   en error");
+                console.log(error);
+                return reject({ "mensaje": "enviandoCorreo: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!" });
+            }
             resolved({ "mensaje": "Correo enviado" });
         });
     }

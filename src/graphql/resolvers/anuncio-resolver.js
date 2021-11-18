@@ -68,7 +68,8 @@ module.exports = {
                     throw new Error(`anuncioCreacion: Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente!`);
                 });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         //Registrar este error de usuario para atenderlo
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
@@ -268,7 +269,8 @@ module.exports = {
                     throw new Error(`solicitarVerificacionCelular: ${err.mensaje}`);
                 });
 
-            Usuario.enviandoCorreo()
+            //Este envío de correo es con el template Verificación!!
+            Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                 .catch(err => {
                     throw new Error(`${err.mensaje}`);
                 });

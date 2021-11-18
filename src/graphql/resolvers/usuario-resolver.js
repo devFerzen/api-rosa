@@ -85,7 +85,8 @@ module.exports = {
                             throw new Error(JSON.stringify({ mensaje: err.mensaje }));
                         });
 
-                    Usuario.enviandoCorreo()
+                    //Este envío de correo es con el template Verificación!!
+                    Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                         .catch(err => {
                             //AFSS: Se debe de dar mensaje de error en esta parte?
                             throw new Error(JSON.stringify({ mensaje: err.mensaje }));
@@ -161,6 +162,11 @@ module.exports = {
             };
             crearBitacoraCreaciones(Bitacora, 'count_registro');
 
+            //Este envío de correo es con el template Registro!!
+            Usuario.enviandoCorreo({ templateId: 'd-293c0995cd20464cb732b025783c5e65' })
+                .catch(err => {
+                    throw new Error("registroUsuario: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                });
             return NuevoUsuarioModel;
         },
 
@@ -193,7 +199,9 @@ module.exports = {
                         throw new Error(`actualizacionContrasena: ${err.mensaje}`);
                     });
 
-                Usuario.enviandoCorreo()
+                //AFSS: Aquí preguntar si se tiene que avisar si el usuario ya intentado o fallado al iniciar sesion?
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("actualizacionContrasena: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
@@ -241,7 +249,8 @@ module.exports = {
                     throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
@@ -253,7 +262,8 @@ module.exports = {
                     throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
                 });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
@@ -300,7 +310,8 @@ module.exports = {
                     throw new Error(`solicitarRestablecerContrasena: ${err.mensaje}`);
                 });
 
-            Usuario.enviandoCorreo()
+            //Este envío de correo es con el template Verificación!!
+            Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                 .catch(err => {
                     throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                 });
@@ -334,7 +345,8 @@ module.exports = {
                         throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
@@ -349,7 +361,8 @@ module.exports = {
                         throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
                     });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
@@ -403,7 +416,8 @@ module.exports = {
                     throw new Error(JSON.stringify({ mensaje: err.mensaje }));
                 });
 
-                Usuario.enviandoCorreo()
+                //Este envío de correo es con el template Verificación!!
+                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
