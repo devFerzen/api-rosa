@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "dev": "nodemon -w src --exec babel-node src",
+        "dev": "nodemon -w node -r dotenv/config src --exec babel-node src",
         "stag": "SET NODE_ENV=staging & nodemon -w src --exec babel-node src"
     },
     "repository": {
@@ -31,6 +31,7 @@
         "bcrypt": "^5.0.1",
         "config": "^3.3.6",
         "cookie-parser": "^1.4.5",
+        "dotenv": "^10.0.0",
         "express": "^4.17.1",
         "express-jwt": "^6.0.0",
         "graphql": "^15.5.1",

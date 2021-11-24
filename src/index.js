@@ -20,7 +20,6 @@ import path from 'path';
 
 import Models from './graphql/models';
 
-
 //Conexión MongoDb
 mongoose.set('debug', false);
 mongoose.connect(`${config.mongoUrl}`, {

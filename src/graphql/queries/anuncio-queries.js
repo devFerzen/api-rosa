@@ -4,8 +4,6 @@ import QueryAnuncio from '../../utilities/queryAnuncio'
 import UsuarioClass from '../../utilities/Usuario'
 import { crearBitacoraCreaciones, crearVerificacionAnuncio, crearBitacoraBusquedas } from '../../utilities/bitacoras'
 import path from 'path';
-
-
 import fs from 'fs';
 import { promisify } from 'util';
 const unlinkAsync = promisify(fs.unlink);

@@ -1,5 +1,13 @@
 import gql from 'graphql-tag';
 
+import bcrypt from 'bcrypt';
+import creacionToken from '../../utilities/autorizacionToken'
+import { crearBitacoraCreaciones } from '../../utilities/bitacoras'
+import UsuarioClass from '../../utilities/Usuario'
+
+import { GraphQLScalarType } from 'graphql';
+import { Kind } from 'graphql/language';
+
 export const typeDef = gql `
   extend type Query {
     queryUsuarioById(id: String!): UsuarioType!
