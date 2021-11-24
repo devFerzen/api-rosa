@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 
-const tiposSubBase = gql `
+export const typeDef = gql `
   type UbicacionUsuarioType {
     pais: String,
     estado: String,
@@ -96,5 +96,3 @@ const tiposSubBase = gql `
   },
 
 `;
-
-module.exports = tiposSubBase;

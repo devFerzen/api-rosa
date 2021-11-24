@@ -151,8 +151,7 @@ app.use((req, res, next) => {
 
 const server = new ApolloServer({
     schema: applyMiddleware(
-        graphqlSchema,
-        permissions //AFSS: Hace que no muestre los errores y pone not authorised
+        graphqlSchema
     ),
     graphiql: process.env.NODE_ENV != 'production' ? true : false,
     context: apolloContext

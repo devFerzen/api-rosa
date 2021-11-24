@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
-const tiposBase = gql `
+
+export const typeDef = gql `
   scalar Date
 
   type UsuarioType {
@@ -132,4 +133,3 @@ const tiposBase = gql `
     fecha_respuesta: Date
   }
 `;
-module.exports = tiposBase;

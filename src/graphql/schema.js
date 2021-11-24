@@ -1,23 +1,40 @@
 import { makeExecutableSchema } from 'apollo-server-express';
-import { mergeTypeDefs, mergeResolvers } from 'graphql-tools';
+import { merge } from 'lodash';
 
-import tiposBase from './queries/tipos-globales-base';
-import tiposSubBase from './queries/tipos-globales-subBase';
+import {
+    typeDef as AnuncioQueries,
+    resolvers as AnuncioResolvers
+} from './queries/anuncio-queries';
 
-import usuarioQueries from './queries/usuario-queries';
-import anuncioQueries from './queries/anuncio-queries';
-import paquetesQueries from './queries/paquetes-queries';
-import generalQueries from './queries/general-queries';
+import {
+    typeDef as TiposGlobalesBase
+} from './queries/tipos-globales-base';
 
-import usuarioResolvers from './resolvers/usuario-resolver';
-import anuncioResolvers from './resolvers/anuncio-resolver';
-import paquetesResolvers from './resolvers/paquetes-resolver';
-import generalResolvers from './resolvers/general-resolver';
+import {
+    typeDef as TiposGlobalesSubbase
+} from './queries/tipos-globales-subbase';
 
-const defs = mergeTypeDefs([tiposBase, tiposSubBase, usuarioQueries, anuncioQueries, paquetesQueries, generalQueries]);
-const resolver = mergeResolvers([usuarioResolvers, anuncioResolvers, paquetesResolvers, generalResolvers]);
+import {
+    typeDef as GeneralQueries,
+    resolvers as GeneralResolvers
+} from './queries/general-queries';
+
+import {
+    typeDef as PaqueteQueries,
+    resolvers as PaqueteResolvers
+} from './queries/paquetes-queries';
+
+const Query = `
+  type Query {
+    _empty: String
+  }
+
+  type Mutation {
+    _empty: String
+  }
+`;
 
 export default makeExecutableSchema({
-    typeDefs: defs,
-    resolvers: resolver
+    typeDefs: [Query, AnuncioQueries, GeneralQueries, PaqueteQueries, TiposGlobalesBase, TiposGlobalesSubbase],
+    resolvers: merge(AnuncioResolvers, GeneralResolvers, PaqueteResolvers)
 });
