@@ -2,6 +2,7 @@ import { ApolloServer } from 'apollo-server-express';
 import { applyMiddleware } from "graphql-middleware";
 import express from 'express'; //express-graphql or express
 import expressJwt from 'express-jwt';
+import jwt from 'jsonwebtoken';
 
 import graphqlSchema from './graphql/schema';
 /* AFSS - Investigación pendiente
@@ -18,6 +19,7 @@ import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
 
+import creacionToken from './utilities/autorizacionToken'
 import Models from './graphql/models';
 
 //Conexión MongoDb
@@ -47,12 +49,74 @@ app.use(morgan('custom'));*/
 
 app.use(cookieParser());
 
-// Automated verify Token Bearer Authorization
-app.use(expressJwt({
-    secret: "envPassSecret",
-    algorithms: ["HS256"],
-    credentialsRequired: false
-}));
+//Silent Refresh
+app.use(async function(req, res, next) {
+    let authTokenVerify, refreshTokenVerify, usuarioSesion, UsuarioLoggeado;
+    const authToken = req.cookies['auth-token'];
+    const refreshToken = req.cookies['refresh-token'];
+
+    if (!authToken && !refreshToken) {
+        return next();
+    }
+
+    try {
+        authTokenVerify = jwt.verify(authToken, "envPassSecret");
+        console.log(">>> auth token, ", authTokenVerify);
+
+        req.user = {
+            id: authTokenVerify['http://localhost:3000/graphql'].id,
+        };
+    } catch (error) {
+        //no cuenta con un token de autorización
+    }
+
+    if (!refreshToken) {
+        return next(); //tampoco cuenta con token de refrescar
+    }
+
+    try {
+        refreshTokenVerify = jwt.verify(refreshToken, "envPassSecret2");
+    } catch (error) {
+        console.log("error en refreshData");
+        return next();
+    }
+
+    console.log(">>> refresh token, ", refreshTokenVerify);
+
+    try {
+        UsuarioLoggeado = await Models.Usuario.findById(authTokenVerify['http://localhost:3000/graphql'].id).lean().exec();
+    } catch (error) {
+        console.log(">>> Problemas al encontrar el usuario");
+        console.table(error);
+        return next();
+    }
+
+    //verificar si el refresh token count es igual que su bd
+    if (!UsuarioLoggeado || UsuarioLoggeado.conteo_sesion != refreshTokenVerify['http://localhost:3000/graphql'].conteo_sesion) {
+        console.log("no se encontro el usuario o son diferentes los conteos de sesion");
+        return next();
+    }
+
+    //creacion de tokens y de graphql context
+    const { autorizacion_token, actualizacion_token } = creacionToken(UsuarioLoggeado);
+
+    res.cookie("auth-token", autorizacion_token, {
+        sameSite: 'strict',
+        path: '/',
+        expire: new Date(new Date().getTime() + 60 * 60000),
+        httpOnly: true
+    });
+
+    res.cookie("refresh-token", actualizacion_token, {
+        expire: new Date(new Date().getTime() + 6 * 1000) //60 * 60000)
+    });
+
+    req.user = {
+        id: UsuarioLoggeado._id,
+    };
+
+    next();
+});
 
 // Apollo Server
 const apolloContext = ({ req, res }) => ({
@@ -131,22 +195,6 @@ app.post('/delete', (req, res, next) => {
 });
 
 app.use('/uploads', express.static('uploads'));
-
-/*//Silent refresh
-app.use((req, res, next) => {
-    const refreshToken = req.cookies['refresh-token'];
-
-    //Si no existe el token state, busca el refresh token
-    if(!req.user){
-        console.log(refreshToken," llamada de regreso 489");
-        //se podrá devolver el token por aquí
-        res.status = 489;
-        return next()
-    }
-
-    console.log("Si existe la cookie refresh token: ", refreshToken);
-    return next();
-});*/
 
 const server = new ApolloServer({
     schema: applyMiddleware(

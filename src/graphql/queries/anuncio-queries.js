@@ -60,8 +60,12 @@ export const resolvers = {
         async anuncioCreacion(parent, { input }, { Models, user }) {
             let ResultadoUsuario, usuarioClass, Usuario;
 
+            if (!user) {
+                throw new Error('anuncioCreacion: Usuario no loggeado!');
+            }
+
             try {
-                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
+                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
                     .exec();
             } catch (err) {
                 console.dir(err);
@@ -99,7 +103,7 @@ export const resolvers = {
             //Usuario con el numero_telefonico_verificado
             console.dir(input);
             const AnuncioModel = new Models.Anuncio(input);
-            AnuncioModel.id_usuario = user['http://localhost:3000/graphql'].id;
+            AnuncioModel.id_usuario = user.id;
 
             //Salvando Anuncio
             let NuevoAnuncio = await AnuncioModel.save()
@@ -177,7 +181,7 @@ export const resolvers = {
                 throw new Error("El anuncio proporcionado no fue encontrado.");
             }
 
-            if (user['http://localhost:3000/graphql'].id != ResultadoAnuncio.id_usuario) {
+            if (user.id != ResultadoAnuncio.id_usuario) {
                 throw new Error("No cuentas con los permisos suficientes de eliminar este anuncio.");
             }
 
@@ -270,7 +274,7 @@ export const resolvers = {
             let ResultadoUsuario, Usuario, result, usuarioClass;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
+                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
                 throw new Error(`solicitarVerificacionCelular: Error en la búsqueda!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!`);

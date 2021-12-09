@@ -29,7 +29,8 @@ const usuarioSchema = new Schema({
     max_updates: { type: Number, default: 0 },
     codigo_verificacion_celular: { type: String, default: undefined },
     codigo_verificacion_usuario: { type: String, default: undefined },
-    estado: { type: Boolean, default: true }
+    estado: { type: Boolean, default: true },
+    conteo_sesion: { type: Number, default: 0 }
 }, {
     timestamps: {
         createdAt: 'fecha_creacion',

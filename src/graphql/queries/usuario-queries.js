@@ -10,7 +10,7 @@ import { Kind } from 'graphql/language';
 
 export const typeDef = gql `
   extend type Query {
-    queryUsuarioById(id: String!): UsuarioType!
+    queryUsuarioById(id: String!): UsuarioType
   }
 
   extend type Mutation {
@@ -120,13 +120,18 @@ export const resolvers = {
             //Inicio de Sesión correcto
             Models.Usuario.findByIdAndUpdate(UsuarioLoggeado._id, { $set: { 'max_intentos': 0, 'codigo_verificacion_usuario': null } }).lean().exec();
 
-            const { autorizacion_token } = creacionToken(UsuarioLoggeado);
-            UsuarioLoggeado.token = autorizacion_token;
+            const { autorizacion_token, actualizacion_token } = creacionToken(UsuarioLoggeado);
 
-            res.cookie('refresh-token', autorizacion_token, {
-                expire: 60 + Date.now(),
+            res.cookie('auth-token', autorizacion_token, {
+                sameSite: 'strict',
+                path: '/',
+                expire: new Date(new Date().getTime() + 60 * 1000),
                 httpOnly: true,
-                secure: process.env.NODE_ENV !== "development" //Investigar
+                secure: process.env.NODE_ENV !== "development"
+            });
+
+            res.cookie("refresh-token", actualizacion_token, {
+                expire: new Date(new Date().getTime() + 6 * 1000) //60 * 60000)
             });
 
             const Bitacora = {
@@ -168,6 +173,7 @@ export const resolvers = {
             console.dir(NuevoUsuario);
             const { autorizacion_token } = creacionToken(NuevoUsuarioModel);
             NuevoUsuarioModel.token = autorizacion_token;
+            //aquí hacer el cookie parser
 
             const Bitacora = {
                 "Creacion": {
@@ -197,7 +203,7 @@ export const resolvers = {
 
             //busqueda de usuadio
             try {
-                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'contrasena': 1, 'max_intentos': 1 }).exec();
+                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'contrasena': 1, 'max_intentos': 1 }).exec();
             } catch (err) {
                 console.dir(err);
                 throw new Error("actualizacionContrasena: Posible error en el id brindado!");
@@ -249,7 +255,7 @@ export const resolvers = {
             let ResultadoUsuario, Usuario, result, usuarioClass;
 
             try {
-                ResultadoUsuario = await Models.Usuario.findById(user['http://localhost:3000/graphql'].id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
+                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
                 throw new Error(`compararVerificacionCelular: Error en la búsqueda!>>> Favor de iniciar Sesion nuevamente!`);

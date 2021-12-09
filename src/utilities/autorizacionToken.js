@@ -3,8 +3,12 @@ import Models from '../graphql/models';
 
 module.exports = (user = Models.Usuario) => {
     const autorizacion_token = jwt.sign({ "http://localhost:3000/graphql": { id: user._id } },
-        "envPassSecret", { expiresIn: '15m' },
+        "envPassSecret", { expiresIn: '30m' },
     );
 
-    return { autorizacion_token }
+    const actualizacion_token = jwt.sign({ "http://localhost:3000/graphql": { conteo_sesion: user.conteo_sesion } },
+        "envPassSecret2", { expiresIn: '15m' },
+    );
+
+    return { autorizacion_token, actualizacion_token }
 }

@@ -43,7 +43,7 @@ export const resolvers = {
             let ResultadoUsuario;
             //si hay usuario agregarlo al input
             if (user !== null) {
-                input.correo = `${input.correo} ${user['http://localhost:3000/graphql'].id}`;
+                input.correo = `${input.correo} ${user.id}`;
             }
 
             //creacion directa
