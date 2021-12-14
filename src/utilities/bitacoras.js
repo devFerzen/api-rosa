@@ -19,9 +19,9 @@ export const crearBitacoraCreaciones = (DataBitacora, conteoEn) => {
     }
     const activationDate = new Date();
     const hoyEs = new Date(activationDate.getUTCFullYear(),
-                            activationDate.getUTCMonth(),
-                            activationDate.getUTCDate()
-                            );
+        activationDate.getUTCMonth(),
+        activationDate.getUTCDate()
+    );
 
     Models.BitacoraCreaciones.updateOne({ "fecha_creacion": hoyEs }, {
         "$push": DataBitacora,
@@ -36,12 +36,16 @@ export const crearBitacoraCreaciones = (DataBitacora, conteoEn) => {
 }
 
 // crearVerificacionAnuncio: Guarda bitacora de verificaciones de Anuncio
-export const crearVerificacionAnuncio = (DataBitacora) => {
+export const crearVerificacionAnuncio = async(DataBitacora) => {
+    let respuesta = true;
+
     const NuevoResultado = new Models.AnunciosEnVerificacion(DataBitacora);
-    NuevoResultado.save().catch(err => {
+    await NuevoResultado.save().catch(err => {
         console.log(`error en el save de crearVerificacionAnuncio...`);
         console.dir(err);
+        respuesta = false;
     });
+    return respuesta;
 }
 
 export const crearBitacoraBusquedas = () => {

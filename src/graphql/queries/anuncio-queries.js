@@ -15,7 +15,7 @@ export const typeDef = gql `
 
   },
   extend type Mutation {
-    anuncioCreacion(input: AnuncioInput!): AnuncioType!,
+    anuncioCreacion(input: AnuncioInput!): String!,
     anuncioActualizacion(input: AnuncioInput!): String!,
     anuncioEliminacion(id_anuncio: String!): String!,
     imagenEliminacion(input: String!): String!,
@@ -61,7 +61,7 @@ export const resolvers = {
             let ResultadoUsuario, Usuario;
 
             if (!user) {
-                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
+                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
             }
 
             try {
@@ -69,11 +69,11 @@ export const resolvers = {
                     .exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
+                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error(JSON.stringify({ mensaje: `Usuario no encontrado.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
+                throw new Error(JSON.stringify({ mensaje: `Usuario no encontrado.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
             }
 
             if (!ResultadoUsuario.estado) {
@@ -85,20 +85,18 @@ export const resolvers = {
             if (!ResultadoUsuario.numero_telefonico_verificado) {
                 let result = await Usuario.verificacionNuevaCelular().catch(err => {
                     //Registrar este error de usuario para atenderlo despues
-                    throw new Error(JSON.stringify({ mensaje: `Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente.`}));
+                    throw new Error(JSON.stringify({ mensaje: `Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente.` }));
                 });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         //Registrar este error de usuario para atenderlo
-                        throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`}));
+                        throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.` }));
                     });
-                throw new Error(JSON.stringify({ mensaje: `Favor de validar el código verificación de celular.`, pagina: 'home', componenteInterno: 'panelHerramientasVerificacion', data: '' }));
+                throw new Error(JSON.stringify({ mensaje: `Favor de validar el código verificación de celular.`, pagina: 'home', componenteInterno: { panelHerramientasVerificacion: true } }));
             }
 
-            //Usuario con el numero_telefonico_verificado
-            console.dir(input);
             const AnuncioModel = new Models.Anuncio(input);
             AnuncioModel.id_usuario = user.id;
 
@@ -107,7 +105,7 @@ export const resolvers = {
                 .catch(
                     err => {
                         console.dir(err);
-                        throw new Error('creacionAnuncio: Error en el salvado del anuncio!');
+                        throw new Error(JSON.stringify({ mensaje: `Error en el salvado del anuncio!` }));
                     }
                 );
 
@@ -117,7 +115,7 @@ export const resolvers = {
                 .catch(
                     err => {
                         console.dir(err);
-                        throw new Error('creacionAnuncio: Error en la actualización del Usuario!');
+                        throw new Error(JSON.stringify({ mensaje: `Error en la actualización del Usuario!` }));
                     }
                 );
 
@@ -132,8 +130,7 @@ export const resolvers = {
             };
             crearBitacoraCreaciones(Bitacora, 'count_anuncio');
 
-
-            return AnuncioModel;
+            return JSON.stringify({ mensaje: `Anunció creado con éxito.`, data: AnuncioModel });
         },
 
         /*
@@ -147,16 +144,15 @@ export const resolvers = {
                 ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(input.id, { $set: input }, { timestamps: false, upsert: true, new: true }).lean().exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error("anuncioActualizacion: Posible error en el id brindado!");
+                throw new Error(JSON.stringify({ mensaje: `Posible error en el id brindado.` }));
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('anuncioActualizacion: Anuncio no encontrado');
+                throw new Error(JSON.stringify({ mensaje: `Anuncio no encontrado.` }));
             }
-
             console.dir(ResultadoAnuncio);
 
-            return "Anuncio actualizado con éxito!";
+            return JSON.stringify({ mensaje: `Anuncio actualizado con éxito.`, data: AnuncioModel });
         },
 
         /*
@@ -170,15 +166,15 @@ export const resolvers = {
                 ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio).lean().exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error(err);
+                throw new Error(JSON.stringify({ mensaje: `Posible error en el id brindado.` }));
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error("El anuncio proporcionado no fue encontrado.");
+                throw new Error(JSON.stringify({ mensaje: `El anuncio proporcionado no fue encontrado.` }));
             }
 
             if (user.id != ResultadoAnuncio.id_usuario) {
-                throw new Error("No cuentas con los permisos suficientes de eliminar este anuncio.");
+                throw new Error(JSON.stringify({ mensaje: `No cuentas con los permisos suficientes de eliminar este anuncio.` }));
             }
 
             await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
@@ -193,7 +189,7 @@ export const resolvers = {
             ResultadoUsuario.anuncios_usuario = anunciosRestantes;
             ResultadoUsuario.save();
 
-            return "Anuncio eliminado con éxito!";
+            return JSON.stringify({ mensaje: `Anuncio eliminado con éxito.` });
         },
 
         async imagenEliminacion(parent, { input }, { Models, user }) {
@@ -208,9 +204,9 @@ export const resolvers = {
                 await unlinkAsync(fileLocation);
             } catch (error) {
                 console.dir(error);
-                throw new Error("´Problemas al borrar el archivo");
+                throw new Error(JSON.stringify({ mensaje: `Problemas al borrar el archivo.` }));
             }
-            return "Anuncio eliminado con éxito!";
+            return JSON.stringify({ mensaje: `Imagen eliminada con éxito.` });
         },
 
         /*
@@ -223,19 +219,19 @@ export const resolvers = {
                 ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_corazones').exec()
             } catch (error) {
                 console.dir(err);
-                throw new Error("likeAnuncio: Posible error en el id brindado!");
+                throw new Error(JSON.stringify({ mensaje: `Anuncio no Encontrado.` }));
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('likeAnuncio: Error al encontrar el Anuncio');
+                throw new Error(JSON.stringify({ mensaje: `Error al intentar encontrar el anuncio.` }));
             }
 
             ResultadoAnuncio.no_corazones++;
             await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
                 console.dir(err);
-                throw new Error('likeAnuncio: error en el save');
+                throw new Error(JSON.stringify({ mensaje: `Error al actualizar el anuncio.` }));
             });
-            return "Éxito!";
+            return JSON.stringify({ mensaje: `Me encata enviado.` });
         },
 
         /*
@@ -248,19 +244,19 @@ export const resolvers = {
                 ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_vistas').exec()
             } catch (error) {
                 console.dir(err);
-                throw new Error("anuncioVista: Posible error en el id brindado!");
+                throw new Error(JSON.stringify({ mensaje: `Anuncio no Encontrado.` }));
             }
 
             if (!ResultadoAnuncio) {
-                throw new Error('anuncioVista: Error al encontrar el Anuncio');
+                throw new Error(JSON.stringify({ mensaje: `Error al intentar encontrar el anuncio.` }));
             }
 
             ResultadoAnuncio.no_vistas++;
             await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
                 console.dir(err);
-                throw new Error('anuncioVista: error en el save');
+                throw new Error(JSON.stringify({ mensaje: `Error al actualizar el anuncio.` }));
             });
-            return "Éxito!";
+            return JSON.stringify({ mensaje: `Éxito en la vista.` });
         },
 
         /*
@@ -273,36 +269,42 @@ export const resolvers = {
                 ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
-                throw new Error(`solicitarVerificacionCelular: Error en la búsqueda!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!`);
+                throw new Error(JSON.stringify({ mensaje: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.` }));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('solicitarVerificacionCelular: Usuario no existe!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!');
+                throw new Error(JSON.stringify({ mensaje: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.` }));
             }
 
             Usuario = new UsuarioClass(ResultadoUsuario);
             result = await Usuario.verificacionNuevaCelular()
                 .catch(err => {
                     console.dir(err)
-                    throw new Error(`solicitarVerificacionCelular: ${err.mensaje}`);
+                    throw new Error(JSON.stringify({ mensaje: ` ${err.mensaje}` }));
                 });
 
             //Este envío de correo es con el template Verificación!!
             Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                 .catch(err => {
-                    throw new Error(`${err.mensaje}`);
+                    throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo o comunicarse con servicio al cliente.` }));
                 });
 
-            return `Solicitud de verificación fue creada con ${result.mensaje} y enviada a su correo!`;
+            return JSON.stringify({ mensaje: `${result.mensaje}, favor de validar su correo.`, pagina: 'home', componenteInterno: { panelHerramientasVerificacion: true, setTipoVerificacion: 'verificacionUsuarioCelular' } });
         },
 
+        //aqui este es nuevo
         async solicitarVerificacionAnuncio(parent, { id_anuncio, foto_anuncio }, { Models }) {
 
             const BitacoraInfo = {
                 "id_anuncio": id_anuncio,
                 "foto_anuncio": foto_anuncio,
             };
-            crearVerificacionAnuncio(BitacoraInfo);
+            let result = crearVerificacionAnuncio(BitacoraInfo);
+            if (!result) {
+                throw new Error(JSON.stringify({ mensaje: `Favor de intentarlo nuevamente o comunicarse con servicio al cliente.` }));
+            }
+
+            return JSON.stringify({ mensaje: `Solicitud de verificación enviada con éxito.` });
         },
 
         /*
@@ -315,11 +317,11 @@ export const resolvers = {
                 ResultadoUsuario = await Models.AnunciosEnVerificacion.findById(input.id_verificacion).exec();
             } catch (error) {
                 console.dir(err);
-                throw new Error("anuncioResponderVerificacion: Posible error en el id brindado!");
+                throw new Error(JSON.stringify({ mensaje: `Verificación no encontrado.` }));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error("anuncioResponderVerificacion: Usuario no se encontro");
+                throw new Error(JSON.stringify({ mensaje: `Verificación no encontrada.` }));
             }
 
             const activationDate = new Date();
@@ -335,11 +337,10 @@ export const resolvers = {
             ResultadoUsuario.comentario = input.comentario;
             ResultadoUsuario.fecha_respuesta = hoyEs;
             await ResultadoUsuario.save().catch(err => {
-                console.log("anuncioResponderVerificacion: error en el save!");
-                throw new Error('anuncioVista: error en el save');
+                throw new Error(JSON.stringify({ mensaje: `Error al actualizar verificación.` }));
             });
 
-            return "Éxito Verificación!";
+            return JSON.stringify({ mensaje: `Verificación actualizada con éxito.` });
         }
 
     }

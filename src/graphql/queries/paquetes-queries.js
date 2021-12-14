@@ -27,12 +27,11 @@ export const resolvers = {
 
             let result = await paquete.save()
                 .catch((err) => {
-                    console.log("solicitarVerificacionAnuncio: error en el save!");
-                    console.dir(err);
+                    throw new Error(JSON.stringify({ mensaje: `Error en la creación del paquete.` }));
                 });
 
             console.dir(result);
-            return "Éxito creacionPaquete!";
+            return JSON.stringify({ mensaje: 'Paquete creado exitosamente.' });
         }
     }
 }

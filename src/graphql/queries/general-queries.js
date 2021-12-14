@@ -40,10 +40,9 @@ export const resolvers = {
             se debe de poner en logs.
         */
         async nuevoContactoCliente(parent, { input }, { Models, user }) {
-            let ResultadoUsuario;
-            //si hay usuario agregarlo al input
+
             if (user !== null) {
-                input.correo = `${input.correo} ${user.id}`;
+                input.correo = `${input.correo} / ${user.id}`;
             }
 
             //creacion directa
@@ -52,12 +51,10 @@ export const resolvers = {
                 await CorreoModel.save();
             } catch (error) {
                 console.log("Error al crear el correo"); //guardar el input
-                console.dir(error);
-                //No tirar error solo guardar el error en un log
-                return 'nuevoContactoCliente: Error al mandar el correo!';
+                throw new Error(JSON.stringify({ mensaje: `Error al mandar el correo!` }));
             }
 
-            return 'nuevoContactoCliente: Correo enviado con éxito!'
+            return JSON.stringify({ mensaje: ` Correo enviado con éxito.`, pagina: 'home', componenteInterno: { panelHerramientasBusqueda: true } });
         }
     }
 }
