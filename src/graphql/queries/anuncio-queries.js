@@ -58,10 +58,10 @@ export const resolvers = {
           anuncioCreacion: 
         */
         async anuncioCreacion(parent, { input }, { Models, user }) {
-            let ResultadoUsuario, usuarioClass, Usuario;
+            let ResultadoUsuario, Usuario;
 
             if (!user) {
-                throw new Error('anuncioCreacion: Usuario no loggeado!');
+                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
             }
 
             try {
@@ -69,35 +69,32 @@ export const resolvers = {
                     .exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
+                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('anuncioCreacion: Error al querer encontrar el usuario del anuncio!');
+                throw new Error(JSON.stringify({ mensaje: `Usuario no encontrado.`, pagina: 'home', componenteInterno: 'panelHerramientasInicioSesion' }));
             }
 
             if (!ResultadoUsuario.estado) {
-                throw new Error('anuncioCreacion: Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente!');
+                throw new Error(JSON.stringify({ mensaje: `Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente.` }));
             }
 
-            usuarioClass = UsuarioClass.Usuario;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             if (!ResultadoUsuario.numero_telefonico_verificado) {
-                //Agregar una forma de actualizar su telefono y su estado "numero_telefonico_verificado", por cambio de celular tal vez.
-
                 let result = await Usuario.verificacionNuevaCelular().catch(err => {
                     //Registrar este error de usuario para atenderlo despues
-                    throw new Error(`anuncioCreacion: Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente!`);
+                    throw new Error(JSON.stringify({ mensaje: `Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente.`}));
                 });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
                         //Registrar este error de usuario para atenderlo
-                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`}));
                     });
-                throw new Error(`anuncioCreacion: Necesitas verificar tu número de celular para crear un anuncio, su nuevo código de verificación de celular ya fue creado ${result.mensaje} y enviada a su celular.!`);
+                throw new Error(JSON.stringify({ mensaje: `Favor de validar el código verificación de celular.`, pagina: 'home', componenteInterno: 'panelHerramientasVerificacion', data: '' }));
             }
 
             //Usuario con el numero_telefonico_verificado
@@ -109,7 +106,6 @@ export const resolvers = {
             let NuevoAnuncio = await AnuncioModel.save()
                 .catch(
                     err => {
-                        console.log("err save anuncio");
                         console.dir(err);
                         throw new Error('creacionAnuncio: Error en el salvado del anuncio!');
                     }
@@ -271,7 +267,7 @@ export const resolvers = {
           solicitarVerificacionCelular: Se le asigna un código al usuario para pasar a verificar su identidad.
         */
         async solicitarVerificacionCelular(parent, params, { Models, user }) {
-            let ResultadoUsuario, Usuario, result, usuarioClass;
+            let ResultadoUsuario, Usuario, result;
 
             try {
                 ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
@@ -284,8 +280,7 @@ export const resolvers = {
                 throw new Error('solicitarVerificacionCelular: Usuario no existe!>>> Favor de volver a iniciar sesion e iniciar de nuevo o contactar a servicio al cliente!');
             }
 
-            usuarioClass = UsuarioClass.Usuario;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
             result = await Usuario.verificacionNuevaCelular()
                 .catch(err => {
                     console.dir(err)

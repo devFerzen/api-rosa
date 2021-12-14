@@ -14,7 +14,7 @@ export const typeDef = gql `
   }
 
   extend type Mutation {
-    inicioSesion(correo: String!, contrasena: String!): UsuarioType!,
+    inicioSesion(correo: String!, contrasena: String!): ResultadoType!,
     registroUsuario(input: UsuarioInput!): UsuarioType!,
     actualizacionContrasena(contrasenaVieja: String!, contrasenaNueva: String!): String!,
     compararVerificacionCelular(input: String!):String!,
@@ -75,7 +75,6 @@ export const resolvers = {
         */
         async inicioSesion(parent, { correo, contrasena }, { Models, res }) {
             let UsuarioLoggeado, Usuario, comparacionContrasenas;
-            let usuarioClass = UsuarioClass.Usuario;
 
             try {
                 UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, {}).populate('anuncios_usuario').exec();
@@ -90,29 +89,31 @@ export const resolvers = {
 
             //Cuenta con bloqueo
             if (UsuarioLoggeado.codigo_verificacion_usuario != undefined) {
-                throw new Error(JSON.stringify({ mensaje: 'Haz excedido el limite de intentos favor de validar su correo!', pagina: 'home', componenteInterno: 'panelHerramientasVerificacion' }));
+                throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos favor de validar su correo.`, pagina: 'home', componenteInterno: {'panelHerramientasVerificacion': true, 'setTipoVerificacion':'verificacionUsuarioContrasena'} }));
             }
 
             comparacionContrasenas = await bcrypt.compare(contrasena, UsuarioLoggeado.contrasena);
             if (!comparacionContrasenas) {
                 UsuarioLoggeado = await Models.Usuario.findOne({ usuario: correo, estado: true }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
-                Usuario = new usuarioClass(UsuarioLoggeado);
+                Usuario = new UsuarioClass(UsuarioLoggeado);
+
                 if (UsuarioLoggeado.max_intentos >= 5) {
                     let result = await Usuario.verificacionNuevoUsuario()
                         .catch(err => {
-                            throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                            throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                         });
 
                     //Este envío de correo es con el template Verificación!!
                     Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                         .catch(err => {
-                            //AFSS: Se debe de dar mensaje de error en esta parte?
-                            throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                            console.dir(err);
+                            throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo o comunicarse con servicio al cliente.`}));
                         });
 
-                    throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`, pagina: 'home', componenteInterno: 'panelHerramientasVerificacion' }));
+                    throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos favor de validar su cuenta en su correo.`, pagina: 'home', componenteInterno: { panelHerramientasVerificacion: true, setTipoVerificacion: 'verificacionUsuario', setCorreo:  correo} }));
                 }
 
+                //Se la da un nuevo intento
                 Usuario.verificacionUsuarioNuevoIntento();
                 throw new Error(JSON.stringify({ mensaje: `Contraseña Incorrecta! Te restan ${5 - UsuarioLoggeado.max_intentos} intentos.!` }));
             }
@@ -145,8 +146,7 @@ export const resolvers = {
             };
             crearBitacoraCreaciones(Bitacora, 'count_inicio_sesion');
 
-            //Ver el auth de vuemaster para ver si guardar en cookie esta bien
-            return UsuarioLoggeado;
+            return JSON.stringify({ mensaje: 'Bienvenido', componenteInterno: { pagina: 'dashboard', setSesion: UsuarioLoggeado, panelHerramientasBusqueda: true} });
         },
 
         /*
@@ -158,7 +158,7 @@ export const resolvers = {
             input.contrasena = await bcrypt.hash(input.contrasena, 10).catch(
                 err => {
                     console.dir(err);
-                    throw new Error('registroUsuario: Error en la encriptacion');
+                    throw new Error(JSON.stringify({mensaje: 'Error en la encriptacion de la contraseña.'}));
                 }
             );
 
@@ -166,14 +166,24 @@ export const resolvers = {
             let NuevoUsuario = await NuevoUsuarioModel.save()
                 .catch(
                     err => {
-                        throw new Error(`registroUsuario: Error en la save ${err}`);
+                        throw new Error(JSON.stringify({mensaje:`Error en la creación del usuario.`}));
                     }
                 );
 
             console.dir(NuevoUsuario);
-            const { autorizacion_token } = creacionToken(NuevoUsuarioModel);
-            NuevoUsuarioModel.token = autorizacion_token;
-            //aquí hacer el cookie parser
+            const { autorizacion_token, actualizacion_token } = creacionToken(NuevoUsuario);
+
+            res.cookie('auth-token', autorizacion_token, {
+                sameSite: 'strict',
+                path: '/',
+                expire: new Date(new Date().getTime() + 60 * 1000),
+                httpOnly: true,
+                secure: process.env.NODE_ENV !== "development"
+            });
+
+            res.cookie("refresh-token", actualizacion_token, {
+                expire: new Date(new Date().getTime() + 6 * 1000) //60 * 60000)
+            });
 
             const Bitacora = {
                 "Creacion": {
@@ -189,9 +199,10 @@ export const resolvers = {
             //Este envío de correo es con el template Registro!!
             Usuario.enviandoCorreo({ templateId: 'd-293c0995cd20464cb732b025783c5e65' })
                 .catch(err => {
-                    throw new Error("registroUsuario: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    throw new Error(JSON.stringify({ mensaje: `Envío fallido, favor de validar su correo o comunicarse con servicio al cliente!`}));
                 });
-            return NuevoUsuarioModel;
+
+            return JSON.stringify({ mensaje: 'Bienvenido', componenteInterno: { pagina: 'dashboard', setSesion: UsuarioLoggeado, panelHerramientasBusqueda: true} });
         },
 
         /*
@@ -199,37 +210,36 @@ export const resolvers = {
         */
         async actualizacionContrasena(parent, { contrasenaVieja, contrasenaNueva }, { Models, user }) {
             let ResultadoUsuario, Usuario, comparacionContrasenas, result;
-            let usuarioClass = UsuarioClass.Usuario;
 
             //busqueda de usuadio
             try {
                 ResultadoUsuario = await Models.Usuario.findById(user.id, { 'contrasena': 1, 'max_intentos': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error("actualizacionContrasena: Posible error en el id brindado!");
+                throw new Error(JSON.stringify({mensaje:`Error al tratar de encontrar al usuario.`}));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error("actualizacionContrasena: Usuario no se encontro");
+                throw new Error(JSON.stringify({mensaje:`Usuario no se encontro.`}));
             }
 
             ResultadoUsuario.contrasenaNueva = contrasenaNueva;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             if (ResultadoUsuario.max_intentos >= 5) {
                 // nueva verificacion ** Pendiente bloqueo de usuario
                 let result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        throw new Error(`actualizacionContrasena: ${err.mensaje}`);
+                        throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                     });
 
                 //AFSS: Aquí preguntar si se tiene que avisar si el usuario ya intentado o fallado al iniciar sesion?
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
-                        throw new Error("actualizacionContrasena: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        throw new Error(JSON.stringify({ mensaje: `Envío fallido, favor de validar su correo o comunicarse con servicio al cliente!`}));
                     });
-                throw new Error(`actualizacionContrasena: Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos favor de validar tu cuenta, con el código de verificación que se le ha enviado a su correo.`, pagina: 'home', componenteInterno: {panelHerramientasVerificacion: true} }));
             }
 
             //Comparaciones de contrasenas
@@ -237,14 +247,14 @@ export const resolvers = {
             if (!comparacionContrasenas) {
                 Usuario.verificacionUsuarioNuevoIntento();
                 console.log(`Error contrasenas incorrectas: contrasenaVieja ${contrasenaVieja}, contrasenaNueva ${contrasenaNueva}`);
-                throw new Error('actualizacionContrasena: Contraseña Incorrecta');
+                throw new Error(JSON.stringify({mensaje: `Contraseña Incorrecta`}));
             }
 
             result = await Usuario.guardandoContrasena({ 'max_intentos': 1 }).catch(err => {
-                throw new Error(`actualizacionContrasena:  ${err.mensaje}`);
+                throw new Error(JSON.stringify({mensaje: `Error al querer actualizar los datos.`}));
             });
 
-            return `actualizacionContrasena: ${result.mensaje}`;
+            return JSON.stringify({mensaje:`${result.mensaje}`});
         },
 
         /*
@@ -252,60 +262,61 @@ export const resolvers = {
             crear un anuncio.
          */
         async compararVerificacionCelular(parent, { input }, { Models, user }) {
-            let ResultadoUsuario, Usuario, result, usuarioClass;
+            let ResultadoUsuario, Usuario, result;
 
             try {
                 ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
             } catch (err) {
                 console.dir(err)
-                throw new Error(`compararVerificacionCelular: Error en la búsqueda!>>> Favor de iniciar Sesion nuevamente!`);
+                throw new Error(JSON.stringify({mensaje:`Error inesperado, Favor de intentar de iniciar Sesion nuevamente!`}));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('compararVerificacionCelular: Usuario no existe!');
+                throw new Error(JSON.stringify({mensaje:'Usuario no existe, favor de validar su usuario!'}));
             }
 
-            usuarioClass = UsuarioClass.Usuario;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             if (ResultadoUsuario.max_updates >= 3) {
-                let result = await Usuario.verificacionNuevaCelular().catch(err => {
-                    throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                let result = await Usuario.verificacionNuevaCelular()
+                .catch(err => {
+                    console.log(`${err.mensaje}`)
+                    throw new Error(JSON.stringify({mensaje:`Favor de actualizar eh intentarlo nuevamente o contactar a servicio al cliente!`}));
                 });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
-                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        throw new Error(JSON.stringify({mensaje:"Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!"}));
                     });
-                throw new Error(`compararVerificacionCelular: Haz excedido el limite de intentos su nueva verificación de celular ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos favor de validar tu cuenta, con el código de verificación que se le ha enviado a su celular.`, pagina: 'home', componenteInterno: {panelHerramientasVerificacion: true, setTipoVerificacion: 'verificacionUsuarioCelular'} }));
             }
 
             if (!ResultadoUsuario.codigo_verificacion_celular) {
                 await Usuario.verificacionNuevaCelular().catch(err => {
-                    throw new Error(`compararVerificacionCelular: Favor de intentar nuevamente o contactar a servicio al cliente!`);
+                    throw new Error(JSON.stringify({mensaje: `Favor de intentar nuevamente o contactar a servicio al cliente!`}));
                 });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
-                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        throw new Error(JSON.stringify({mensaje: "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!"}));
                     });
-
-                throw new Error("compararVerificacionCelular: Se le ha enviado una código de verificación a su correo, favor de verificarlo!");
+                throw new Error(JSON.stringify({ mensaje: `Se le ha enviado una código de verificación a su correo, favor de verificarlo.`, pagina: 'home', componenteInterno: {panelHerramientasVerificacion: true, setTipoVerificacion: 'verificacionUsuarioCelular'} }));
             }
 
             if (ResultadoUsuario.codigo_verificacion_celular !== input) {
                 Usuario.verificacionCelularNuevoIntento();
-                throw new Error(`compararVerificacionCelular: Código de verificación incorrecto!`);
+                throw new Error(JSON.stringify({mensaje:`Código de verificación incorrecto, favor de validarlo.`}));
             }
 
-            //Usuario verificado y update
-            result = await Usuario.verificarCelularUsuario().catch(err => {
-                throw new Error(`compararVerificacionCelular: ${err.mensaje}`);
+            //Se quita su bloquéo
+            result = await Usuario.codigoCelularVerificado()
+            .catch(err => {
+                throw new Error(JSON.stringify({mensaje:`Error al guardar su verificación, favor de actualizar y verificar o hacer el proceso nuevamente.`}));
             });
 
-            return result.mensaje;
+            return JSON.stringify({ mensaje: `${result.mensaje}, favor de validar su correo.`, pagina: 'home', componenteInterno: {editAnuncioDisplay: true, pagina: 'dashboard', numerotelefonicoUsuario: true} });
         },
 
         /*
@@ -313,60 +324,58 @@ export const resolvers = {
           cuál deberá proporcionarlo para habilitar cambiar la contraseña
          */
         async solicitarRestablecerContrasena(parent, { usuario }, { Models }) {
-            let ResultadoUsuario, result, usuarioClass, Usuario;
+            let ResultadoUsuario, result, Usuario;
             try {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 })
                     .exec();
             } catch (err) {
                 console.dir(err)
-                throw new Error(`solicitarRestablecerContraseña: Error en la búsqueda!`);
+                throw new Error(JSON.stringify({mensaje:`Error en la búsqueda!`}));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('solicitarRestablecerContraseña: Usuario no existe!');
+                throw new Error(JSON.stringify({mensaje:'Usuario no existe!'}));
             }
 
-            usuarioClass = UsuarioClass.Usuario;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             result = await Usuario.verificacionNuevoUsuario()
                 .catch(err => {
-                    throw new Error(`solicitarRestablecerContrasena: ${err.mensaje}`);
+                    throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                 });
 
             //Este envío de correo es con el template Verificación!!
             Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                 .catch(err => {
-                    throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                    throw new Error(JSON.stringify({ mensaje: `Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente.` }));
                 });
 
-            return `solicitarRestablecerContrasena: Su ${result.mensaje} y enviado a su correo, favor de validar!`;
+            throw new Error(JSON.stringify({ mensaje: `${result.mensaje}, favor de validar su correo.`, pagina: 'home', componenteInterno: {panelHerramientasVerificacion: true, pagina: 'home', setTipoVerificacion: 'verificacionUsuarioContrasena', setCorreo: usuario} }));
         },
 
         /*
           compararVerificacionUsuario 2: Compara el código de verificación USUARIO mandado al usuario por correo
          */
         async compararVerificacionUsuario(parent, { input, usuario, clean }, { Models }) {
-            let ResultadoUsuario, usuarioClass, Usuario, result;
+            let ResultadoUsuario, Usuario, result;
             try {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error("compararVerificacionUsuario: posible error en el id brindado! >>> Usuario Incorrecto favor de verificarlo");
+                throw new Error(JSON.stringify({ mensaje: `Usuario Incorrecto favor de verificarlo`}));//posible error en el id brindado!
             }
 
             if (!ResultadoUsuario) {
-                throw new Error('compararVerificacionUsuario: Usuario no existe!');
+                throw new Error(JSON.stringify({ mensaje: 'Usuario no existe!'}));
             }
 
-            usuarioClass = UsuarioClass.Usuario;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             if (ResultadoUsuario.max_intentos >= 3) {
                 // nueva verificacion
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                     });
 
                 //Este envío de correo es con el template Verificación!!
@@ -374,40 +383,40 @@ export const resolvers = {
                     .catch(err => {
                         throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
                     });
-
-                throw new Error(`Haz excedido el limite de intentos su nuevo ${result.mensaje} y enviado a su correo.!`);
+                throw new Error(JSON.stringify({ mensaje: `Haz excedido el limite de intentos favor de validar tu cuenta, con el código de verificación que se le ha enviado a su correo.`, pagina: 'home', componenteInterno: 'panelHerramientasVerificacion' }));
             }
 
             //AFSS: Este pensamiento de generarle un codigo de verificación un usuario se me hace mala idea. Validar flujo
             if (!ResultadoUsuario.codigo_verificacion_usuario) {
                 result = await Usuario.verificacionNuevoUsuario()
                     .catch(err => {
-                        throw new Error(`compararVerificacionUsuario: ${err.mensaje}`);
+                        throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                     });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
-                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        throw new Error(JSON.stringify({ mensaje: `Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente.`}));
                     });
 
-                throw new Error(`compararVerificacionUsuario: No cuenta con código de verificación, su ${result.mensaje}`);
+                throw new Error(JSON.stringify({mensaje: `No cuenta con código de verificación, y se le fue entregada una a su correo, favor de validar.`}));
             }
 
             if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
                 Usuario.verificacionUsuarioNuevoIntento();
-                throw new Error(`compararVerificacionUsuario: Código de verificación incorrecto! Te restan ${3 - ResultadoUsuario.max_intentos} intentos.!`);
+                throw new Error(JSON.stringify({mensaje: `Código de verificación incorrecto! Te restan ${3 - ResultadoUsuario.max_intentos} intentos.!`}));
             }
 
             //agregar un input extra e si esta activo eliminar el codigo de verificacion, que pase por default false y solo
             //en la accion de excederse del limite de 5 de inicio de sesion este lo mandará como verdaro
+            //Pendiente afss* aquí mejor poner el porqué de este if
             if (clean) {
                 Usuario.verificacionNuevoUsuario(true)
                     .catch(err => {
-                        throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                        throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                     });
             }
-            return "Verificación de usuario con Éxito!";
+            return JSON.stringify({mensaje: `Verificación de usuario con Éxito!`});
         },
 
         /*
@@ -415,7 +424,6 @@ export const resolvers = {
          */
         async restablecerContrasena(parent, { input, usuario, contrasena }, { Models }) {
             let ResultadoUsuario, Usuario, result;
-            let usuarioClass = UsuarioClass.Usuario;
             console.log("restablecerContrasena...")
 
             //busqueda de usuadio
@@ -423,41 +431,43 @@ export const resolvers = {
                 ResultadoUsuario = await Models.Usuario.findOne({ usuario: usuario }, { 'contrasena': 1, 'max_intentos': 1, 'codigo_verificacion_usuario': 1 }).exec();
             } catch (err) {
                 console.dir(err);
-                throw new Error("restablecerContrasena: Posible error en el id brindado o Usuario no encontrado!");
+                throw new Error(JSON.stringify({mensaje: `Posible error en el id brindado o Usuario no encontrado!`}));
             }
 
             if (!ResultadoUsuario) {
-                throw new Error("restablecerContrasena: Usuario no se encontro");
+                throw new Error(JSON.stringify({mensaje: `Usuario no se encontro`}));
             }
 
             ResultadoUsuario.contrasenaNueva = contrasena;
-            Usuario = new usuarioClass(ResultadoUsuario);
+            Usuario = new UsuarioClass(ResultadoUsuario);
 
             console.log("ResultadoUsuario.codigo_verificacion_usuario ", ResultadoUsuario.codigo_verificacion_usuario, " input", input);
 
             if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
-                Usuario.verificacionNuevoUsuario().catch(err => {
-                    throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                Usuario.verificacionNuevoUsuario()
+                .catch(err => {
+                    throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                 });
 
                 //Este envío de correo es con el template Verificación!!
                 Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
                     .catch(err => {
-                        throw new Error("Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!");
+                        console.dir(err);
+                        throw new Error("Favor de validar su correo o comunicarse con servicio al cliente!");
                     });
                 throw new Error("No pudimos actualizar su contraseña correctamente, le enviaremos un código de verificación a sus cuentas!");
             }
 
             result = await Usuario.guardandoContrasena().catch(err => {
-                throw new Error(`restablecerContrasena: ${err.mensaje}`);
+                throw new Error(JSON.stringify({mensaje: `Error al querer actualizar los datos.`}));
             });
 
             Usuario.verificacionNuevoUsuario(true)
                 .catch(err => {
-                    throw new Error(JSON.stringify({ mensaje: err.mensaje }));
+                    throw new Error(JSON.stringify({ mensaje: `Favor de actualizar y intentarlo de nuevo, o comunicarse con servicio al cliente.` }));
                 });
 
-            return `Contraseña actualizada ${result.mensaje}`;
+            return JSON.stringify({mensaje:`${result.mensaje}`});
         }
 
         //Creación para hacer un update de datos de usuario de Ubicacion_usuario y default_contacto

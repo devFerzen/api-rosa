@@ -14,21 +14,25 @@ class Usuario {
     verificacionNuevoUsuario(estaLoggeado = false) {
         return new Promise(async(resolved, reject) => {
             console.log("verificacionNuevoUsuario...", estaLoggeado);
-            let codigoVerificacion = CodigoVerificacion.creacion();
+            let codigoVerificacion;
 
             this.Usuario.max_intentos = 0;
             this.Usuario.codigo_verificacion_usuario = null;
+
             if (!estaLoggeado) {
+                codigoVerificacion = CodigoVerificacion.creacion();
                 this.Usuario.codigo_verificacion_usuario = codigoVerificacion;
             }
 
             await this.Usuario.save()
                 .catch(err => {
-                    console.dir(err);
-                    return reject({ "mensaje": "Error en el update del usario verificación" });
+                    //console.log(">>>con error<<<");
+                    //console.dir(err);
+                    reject({mensaje: `error al querer actualizar a el usuario.`});
+                    return;
                 });
 
-            resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio", "data": codigoVerificacion });
+            resolved({ mensaje: "Código de verificación creada con éxtio", "data": codigoVerificacion });
         });
     }
 
@@ -36,8 +40,9 @@ class Usuario {
         this.Usuario.max_intentos = this.Usuario.max_intentos + 1;
         this.Usuario.save()
             .catch(err => {
-                console.dir(err);
-                throw new Error(`Usuario verificacionUsuarioNuevoIntento: error en el update de max updates del usario ${id_usuario}`);
+                //console.log(">>>con error<<<");
+                //console.dir(err);
+                throw new Error({mensaje: `error al actualizar el máximo de actualizaciones.`});
             });
     }
 
@@ -51,11 +56,12 @@ class Usuario {
             //Este tipo de funciones devuelven el objeto, como hacer para que no lo haga y tal vez pueda ser más rápida
             await this.Usuario.save()
                 .catch(err => {
-                    console.dir(err);
-                    reject({ mensaje: "verificacionNuevaCelular: Favor de intentar nuevamente o contactar a servicio al cliente!" });
+                    //console.log(">>>con error<<<");
+                    //console.dir(err);
+                    reject({ mensaje: "error al querer guardar el usuario." });
                     return;
                 });
-            resolved({ "mensaje": "código de verificación de Usuario fue creado con éxtio", "data": codigoVerificacion });
+            resolved({ mensaje: "Código de verificación creado con éxtio", "data": codigoVerificacion });
         });
 
     }
@@ -64,12 +70,13 @@ class Usuario {
         this.Usuario.max_updates = this.Usuario.max_updates + 1;
         this.Usuario.save()
             .catch(err => {
-                console.dir(err);
-                throw new Error(`Usuario verificacionCelularNuevoIntento: error en el update de max updates del usario ${id_usuario}`);
+                //console.log(">>>con error<<<");
+                //console.dir(err);
+                throw new Error({mensaje: `error al actualizar el máximo de actualizaciones.`});
             });
     }
 
-    verificarCelularUsuario() {
+    codigoCelularVerificado() {
         return new Promise(async(resolved, reject) => {
             this.Usuario.max_updates = 0;
             this.Usuario.numero_telefonico_verificado = true;
@@ -78,11 +85,13 @@ class Usuario {
 
             try {
                 result = await this.Usuario.save();
-            } catch (error) {
-                return reject({ "mensaje": error.mensaje });
+            } catch (err) {
+                //console.log(">>>con error<<<");
+                //console.dir(err);
+                return reject({ mensaje: 'error al guardar el usuario.' });
             }
 
-            resolved({ "mensaje": "Usuario celular verificado con éxito!" });
+            resolved({ mensaje: "La verificación fue exitosa." });
         });
     }
 
@@ -96,24 +105,24 @@ class Usuario {
             if (PropiedadExtra.hasOwnProperty('max_intentos')) {
                 this.Usuario.max_intentos = 0;
             }
-            console.log(`guardandoContrasena... ${this.Usuario.contrasenaNueva}`);
+            console.log(`guardandoContrasena para ${this.Usuario.contrasenaNueva}... `);
 
             this.Usuario.contrasena = await bcrypt.hash(this.Usuario.contrasenaNueva, 10).catch(
                 err => {
-                    return reject({ "mensaje": "Error en la encriptacion" });
+                    return reject({ mensaje: "error en la encriptacion la contraseña." });
                 }
             );
 
             await this.Usuario.save()
                 .catch(
                     err => {
-                        console.log("err**********************");
+                        console.log(">>>con error<<<");
                         console.dir(err);
-                        return reject({ "mensaje": "Error al guardar la contraseña" });
+                        return reject({ mensaje: "error al guardar la contraseña." });
                     }
                 );
 
-            resolved({ "mensaje": "con éxito" });
+            resolved({ mensaje: "Contraseña guardada exitosamente." });
         });
     }
 
@@ -136,14 +145,14 @@ class Usuario {
 
                 await sgMail.send(msg);
             } catch (error) {
-                console.dir("   en error");
-                console.log(error);
-                return reject({ "mensaje": "enviandoCorreo: Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!" });
+                console.log(">>>con error<<<");
+                console.dir(error);
+                return reject({ mensaje: "error al enviar el correo." });
             }
-            resolved({ "mensaje": "Correo enviado" });
+            resolved({ mensaje: "Correo enviado con éxito" });
         });
     }
 
 }
 
-module.exports = { Usuario };
+module.exports = Usuario;
