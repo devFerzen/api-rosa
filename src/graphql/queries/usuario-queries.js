@@ -11,6 +11,7 @@ import { Kind } from 'graphql/language';
 export const typeDef = gql `
   extend type Query {
     queryUsuarioById(id: String!): UsuarioType
+    queryUsuario: UsuarioType
   }
 
   extend type Mutation {
@@ -61,6 +62,20 @@ export const resolvers = {
         queryUsuarioById: async(_, { id }, { Models }) => {
             try {
                 let result = await Models.Usuario.findById(id).lean().exec();
+                return result;
+            } catch (err) {
+                console.dir(err)
+                throw new Error(err);
+            }
+        },
+        queryUsuario: async(_, {}, { Models, user }) => {
+
+            if (!user) {
+                return null;
+            }
+
+            try {
+                let result = await Models.Usuario.findById(user.id).lean().exec();
                 return result;
             } catch (err) {
                 console.dir(err)

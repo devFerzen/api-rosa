@@ -4,7 +4,7 @@ export const typeDef = gql `
   scalar Date
 
   type UsuarioType {
-    id: ID
+    id: String,
     token: String,
     usuario: String,
     contrasena: String,
@@ -34,7 +34,7 @@ export const typeDef = gql `
   }
 
   type AnuncioType {
-    id: ID
+    id: String,
     categorias: [String],
     permisos: [String],
     Sec_Descripcion: SecDescripcionType,
