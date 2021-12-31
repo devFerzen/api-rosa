@@ -38,6 +38,7 @@
         "graphql-middleware": "^6.0.10",
         "graphql-shield": "^7.5.0",
         "graphql-tools": "^7.0.5",
+        "jwt-decode": "^3.1.2",
         "lodash": "^4.17.21",
         "mongoose": "^5.12.15",
         "morgan": "^1.10.0",

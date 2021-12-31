@@ -4,7 +4,7 @@ export const typeDef = gql `
   scalar Date
 
   type UsuarioType {
-    id: String,
+    id: ID!,
     token: String,
     usuario: String,
     contrasena: String,
@@ -34,7 +34,7 @@ export const typeDef = gql `
   }
 
   type AnuncioType {
-    id: String,
+    id: ID!,
     categorias: [String],
     permisos: [String],
     Sec_Descripcion: SecDescripcionType,
@@ -52,7 +52,7 @@ export const typeDef = gql `
   }
 
   input AnuncioInput {
-    id: String,
+    id: ID!,
     categorias: [String],
     permisos: [String],
     Sec_Descripcion: SecDescripcionInput,
@@ -98,7 +98,7 @@ export const typeDef = gql `
   }
 
   type DdlGeneralType {
-    no_id: String,
+    no_id: ID!,
     descripcion: String,
     icono_icono: String,
     icono_categoria: String,
@@ -107,7 +107,7 @@ export const typeDef = gql `
   }
 
   input DdlGeneralInput {
-    no_id: String,
+    no_id: ID!,
     descripcion: String,
     icono_icono: String,
     icono_categoria: String,

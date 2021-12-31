@@ -1,8 +1,8 @@
 import { ApolloServer } from 'apollo-server-express';
 import { applyMiddleware } from "graphql-middleware";
 import express from 'express'; //express-graphql or express
-import expressJwt from 'express-jwt';
 import jwt from 'jsonwebtoken';
+import jwt_decode from "jwt-decode";
 
 import graphqlSchema from './graphql/schema';
 /* AFSS - Investigación pendiente
@@ -51,7 +51,9 @@ app.use(cookieParser());
 
 //Silent Refresh
 app.use(async function(req, res, next) {
-    let authTokenVerify, refreshTokenVerify, usuarioSesion, UsuarioLoggeado;
+    let authTokenVerify, refreshTokenVerify, UsuarioLoggeado;
+    let tokenAcceso = true;
+
     const authToken = req.cookies['auth-token'];
     const refreshToken = req.cookies['refresh-token'];
 
@@ -59,63 +61,105 @@ app.use(async function(req, res, next) {
         return next();
     }
 
-    try {
-        authTokenVerify = jwt.verify(authToken, "envPassSecret");
-        console.log(">>> auth token, ", authTokenVerify);
-
-        req.user = {
-            id: authTokenVerify['http://localhost:3000/graphql'].id,
-        };
-    } catch (error) {
-        //no cuenta con un token de autorización
-    }
-
+    //primero poner el de refreshToken si este esta expirado o tiene error borrar todo cookie
     if (!refreshToken) {
         return next(); //tampoco cuenta con token de refrescar
     }
 
     try {
-        refreshTokenVerify = jwt.verify(refreshToken, "envPassSecret2");
+        jwt.verify(refreshToken, 
+            "envPassSecret2",
+                function(err, decoded){
+                    if(err){
+                        console.log("refresh esta expirado");
+                        tokenAcceso = false;
+                    }
+
+                    refreshTokenVerify = decoded;
+                }
+            );
+                
     } catch (error) {
-        console.log("error en refreshData");
+        console.log("error en el verify token refreshData");
+        console.dir(error);
+        //Este debe de eliminar todo token existente para obligar volver a inicar sesion
         return next();
     }
 
-    console.log(">>> refresh token, ", refreshTokenVerify);
-
+    if(!tokenAcceso){
+        return next();
+    }
+    
     try {
-        UsuarioLoggeado = await Models.Usuario.findById(authTokenVerify['http://localhost:3000/graphql'].id).lean().exec();
+    
+        jwt.verify(authToken,
+            "envPassSecret",
+                async function(err, decoded){
+                    if(err){       
+
+                        if(err.message === 'jwt expired'){
+                            try {
+                                //usar lo contrario de verify
+                                authTokenVerify = jwt_decode(authToken, "envPassSecret");
+                                console.log(authTokenVerify);
+
+                                UsuarioLoggeado = await Models.Usuario.findById(authTokenVerify['http://localhost:3000/graphql'].id).lean().exec();
+                            } catch (error) {
+                                console.log(">>> Problemas al encontrar el usuario");
+                                tokenAcceso = false;
+                            }
+
+                            //verificar si el refresh token count es igual que su bd
+                            if (!UsuarioLoggeado || UsuarioLoggeado.conteo_sesion != refreshTokenVerify['http://localhost:3000/graphql'].conteo_sesion) {
+                                console.log("no se encontro el usuario o son diferentes los conteos de sesion");
+                                tokenAcceso = false;
+                            }
+
+                            //creacion de tokens y de graphql context
+                            //**** analizar bien estos pasos creo que esta re-creando los tokens en cada llamada */
+                            const { autorizacion_token, actualizacion_token } = creacionToken(UsuarioLoggeado);
+                            console.log(">>> Nuevas Tokens");
+
+                            res.cookie("auth-token", autorizacion_token, {
+                                sameSite: 'strict',
+                                path: '/',
+                                expire: new Date(new Date().getTime() + 60 * 60000),
+                                httpOnly: true
+                            });
+
+                            res.cookie("refresh-token", actualizacion_token, {
+                                expire: new Date(new Date().getTime() + 6 * 1000) //60 * 60000)
+                            });
+
+                            req.user = {
+                                id: UsuarioLoggeado._id,
+                            };
+                        } else {
+                            console.log(">>> Auth verify con error");
+                            tokenAcceso = false;
+                        }
+                    }
+                    
+                    authTokenVerify = decoded;
+                }
+        );
+        
     } catch (error) {
-        console.log(">>> Problemas al encontrar el usuario");
-        console.table(error);
+        //no cuenta con un token de autorización4
+        console.log("authTokenVerify token en error");
         return next();
     }
 
-    //verificar si el refresh token count es igual que su bd
-    if (!UsuarioLoggeado || UsuarioLoggeado.conteo_sesion != refreshTokenVerify['http://localhost:3000/graphql'].conteo_sesion) {
-        console.log("no se encontro el usuario o son diferentes los conteos de sesion");
+    //Si adentro del callback de verify auth token no pasa, este punto lo regresa.
+    if(!tokenAcceso){
         return next();
     }
-
-    //creacion de tokens y de graphql context
-    const { autorizacion_token, actualizacion_token } = creacionToken(UsuarioLoggeado);
-
-    res.cookie("auth-token", autorizacion_token, {
-        sameSite: 'strict',
-        path: '/',
-        expire: new Date(new Date().getTime() + 60 * 60000),
-        httpOnly: true
-    });
-
-    res.cookie("refresh-token", actualizacion_token, {
-        expire: new Date(new Date().getTime() + 6 * 1000) //60 * 60000)
-    });
-
+    
     req.user = {
-        id: UsuarioLoggeado._id,
+        id: authTokenVerify['http://localhost:3000/graphql'].id,
     };
-
-    next();
+    
+    return next();
 });
 
 // Apollo Server

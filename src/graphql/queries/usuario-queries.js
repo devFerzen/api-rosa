@@ -10,8 +10,8 @@ import { Kind } from 'graphql/language';
 
 export const typeDef = gql `
   extend type Query {
-    queryUsuarioById(id: String!): UsuarioType
-    queryUsuario: UsuarioType
+    queryUsuarioById(id: String!): UsuarioType,
+    queryUsuario(input: String): UsuarioType
   }
 
   extend type Mutation {
@@ -61,21 +61,24 @@ export const resolvers = {
     Query: {
         queryUsuarioById: async(_, { id }, { Models }) => {
             try {
-                let result = await Models.Usuario.findById(id).lean().exec();
+                console.log("id",id);
+
+                let result = await Models.Usuario.findById(id).lean().populate('anuncios_usuario').exec();
                 return result;
             } catch (err) {
                 console.dir(err)
                 throw new Error(err);
             }
         },
-        queryUsuario: async(_, {}, { Models, user }) => {
+        queryUsuario: async(_, { input }, { Models, user }) => {
 
             if (!user) {
-                return null;
+                console.log("queryUsuario ", queryUsuario);
+                return {};
             }
 
             try {
-                let result = await Models.Usuario.findById(user.id).lean().exec();
+                let result = await Models.Usuario.findById(user.id).lean().populate('anuncios_usuario').exec();
                 return result;
             } catch (err) {
                 console.dir(err)
