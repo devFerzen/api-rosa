@@ -11,11 +11,12 @@ import { Kind } from 'graphql/language';
 export const typeDef = gql `
   extend type Query {
     queryUsuarioById(id: String!): UsuarioType,
-    queryUsuario(input: String): UsuarioType
+    queryUsuario(input: String!): UsuarioType
   }
 
   extend type Mutation {
     inicioSesion(correo: String!, contrasena: String!): String!,
+    cerrarSesion(input: String):String!,
     registroUsuario(input: UsuarioInput!): String!,
     actualizacionContrasena(contrasenaVieja: String!, contrasenaNueva: String!): String!,
     compararVerificacionCelular(input: String!):String!,
@@ -70,19 +71,21 @@ export const resolvers = {
                 throw new Error(err);
             }
         },
+
         queryUsuario: async(_, { input }, { Models, user }) => {
+            let result;
 
-            if (!user) {
-                console.log("queryUsuario ", queryUsuario);
-                return {};
+            if(!user){
+                console.log(">>> queryUsuario ", queryUsuario);
+                throw new Error('Sin usuario loggeado.!');
             }
-
-            try {
-                let result = await Models.Usuario.findById(user.id).lean().populate('anuncios_usuario').exec();
+            
+            try {                
+                result = await Models.Usuario.findById(user.id).lean().populate('anuncios_usuario').exec();
                 return result;
-            } catch (err) {
-                console.dir(err)
-                throw new Error(err);
+            } catch (error) {
+                console.log(">>> error");
+                return new Error('Error al buscar el usuario');    
             }
         }
     },
@@ -165,6 +168,12 @@ export const resolvers = {
             crearBitacoraCreaciones(Bitacora, 'count_inicio_sesion');
 
             return JSON.stringify({ mensaje: 'Bienvenido', pagina: 'dashboard', componenteInterno: { setSesion: UsuarioLoggeado, panelHerramientasBusqueda: true } });
+        },
+
+        async cerrarSesion(parent, {input}, {res}){
+            res.clearCookie('refresh-token');
+            res.clearCookie('auth-token');
+            return JSON.stringify({ mensaje: `Sesion cerrada, hasta pronto!`, pagina: 'home', componenteInterno: { panelHerramientasBusqueda: true } });
         },
 
         /*

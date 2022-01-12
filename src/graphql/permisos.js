@@ -25,12 +25,14 @@ export default shield(
         //test: or(and(canReadOwnUser, isReadingOwnUser), canReadAnyUser),
         //Usuario
         queryUsuarioById: paseLibre,
+        queryUsuario: paseLibre,
         //Anuncio
         queryAnuncios: paseLibre
     },
     Mutation: {
         //Usuario
         inicioSesion: paseLibre,
+        cerrarSesion: paseLibre,
         registroUsuario: paseLibre,
         actualizacionContrasena: usuarioConAutoridad,
         compararVerificacionCelular: paseLibre,

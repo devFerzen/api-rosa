@@ -71,8 +71,9 @@ app.use(async function(req, res, next) {
             "envPassSecret2",
                 function(err, decoded){
                     if(err){
-                        console.log("refresh esta expirado");
+                        console.log(">>> refresh esta expirado");
                         tokenAcceso = false;
+                        return;
                     }
 
                     refreshTokenVerify = decoded;
@@ -87,6 +88,8 @@ app.use(async function(req, res, next) {
     }
 
     if(!tokenAcceso){
+        res.clearCookie('refresh-token');
+        res.clearCookie('auth-token');
         return next();
     }
     
