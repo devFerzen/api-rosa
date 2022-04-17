@@ -160,6 +160,7 @@ app.use(async function(req, res, next) {
     
     req.user = {
         id: authTokenVerify['http://localhost:3000/graphql'].id,
+        token: authToken
     };
     
     return next();

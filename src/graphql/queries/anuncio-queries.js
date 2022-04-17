@@ -152,7 +152,7 @@ export const resolvers = {
             }
             console.dir(ResultadoAnuncio);
 
-            return JSON.stringify({ mensaje: `Anuncio actualizado con éxito.`, data: AnuncioModel });
+            return JSON.stringify({ mensaje: `Anuncio actualizado con éxito.`, data: ResultadoAnuncio });
         },
 
         /*

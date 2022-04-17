@@ -10,7 +10,7 @@ class Usuario {
         console.log(Usuario);
     }
 
-    //Pendiente bloquear usuario
+    //Manda a crear un Codigo de verificacion de Usuario
     verificacionNuevoUsuario(estaLoggeado = false) {
         return new Promise(async(resolved, reject) => {
             console.log("verificacionNuevoUsuario...", estaLoggeado);
@@ -20,19 +20,20 @@ class Usuario {
             this.Usuario.codigo_verificacion_usuario = null;
 
             if (!estaLoggeado) {
+                //Solo cuando no esta loggeado manda codigo de verificacion
                 codigoVerificacion = CodigoVerificacion.creacion();
                 this.Usuario.codigo_verificacion_usuario = codigoVerificacion;
             }
 
             await this.Usuario.save()
                 .catch(err => {
-                    //console.log(">>>con error<<<");
-                    //console.dir(err);
+                    console.log(">>>con error<<<");
+                    console.dir(err);
                     reject({mensaje: `error al querer actualizar a el usuario.`});
                     return;
                 });
 
-            resolved({ mensaje: "Código de verificación creada con éxtio", "data": codigoVerificacion });
+            resolved({ mensaje: "Favor de ingresar el código de verificación que se le fue enviado a su correo.!", "data": codigoVerificacion });
         });
     }
 
@@ -56,12 +57,12 @@ class Usuario {
             //Este tipo de funciones devuelven el objeto, como hacer para que no lo haga y tal vez pueda ser más rápida
             await this.Usuario.save()
                 .catch(err => {
-                    //console.log(">>>con error<<<");
-                    //console.dir(err);
+                    console.log(">>>con error<<<");
+                    console.dir(err);
                     reject({ mensaje: "error al querer guardar el usuario." });
                     return;
                 });
-            resolved({ mensaje: "Código de verificación creado con éxtio", "data": codigoVerificacion });
+            resolved({ mensaje: "Favor de ingresar el código de verificación que se le fue enviado a su correo.!", "data": codigoVerificacion });
         });
 
     }
@@ -91,7 +92,7 @@ class Usuario {
                 return reject({ mensaje: 'error al guardar el usuario.' });
             }
 
-            resolved({ mensaje: "La verificación fue exitosa." });
+            resolved({ mensaje: "La verificación fue exitosa.!" });
         });
     }
 
@@ -122,7 +123,7 @@ class Usuario {
                     }
                 );
 
-            resolved({ mensaje: "Contraseña guardada exitosamente." });
+            resolved({ mensaje: "Contraseña guardada exitosamente.!" });
         });
     }
 
