@@ -27,7 +27,7 @@ class Usuario {
 
             await this.Usuario.save()
                 .catch(err => {
-                    console.log(">>>con error<<<");
+                    console.log(">>>verificacionNuevoUsuario<<<");
                     console.dir(err);
                     reject({mensaje: `error al querer actualizar a el usuario.`});
                     return;
@@ -41,7 +41,7 @@ class Usuario {
         this.Usuario.max_intentos = this.Usuario.max_intentos + 1;
         this.Usuario.save()
             .catch(err => {
-                //console.log(">>>con error<<<");
+                //console.log(">>>verificacionUsuarioNuevoIntento<<<");
                 //console.dir(err);
                 throw new Error({mensaje: `error al actualizar el máximo de actualizaciones.`});
             });
@@ -57,7 +57,7 @@ class Usuario {
             //Este tipo de funciones devuelven el objeto, como hacer para que no lo haga y tal vez pueda ser más rápida
             await this.Usuario.save()
                 .catch(err => {
-                    console.log(">>>con error<<<");
+                    console.log(">>>verificacionNuevaCelular<<<");
                     console.dir(err);
                     reject({ mensaje: "error al querer guardar el usuario." });
                     return;
@@ -71,7 +71,7 @@ class Usuario {
         this.Usuario.max_updates = this.Usuario.max_updates + 1;
         this.Usuario.save()
             .catch(err => {
-                //console.log(">>>con error<<<");
+                //console.log(">>>verificacionCelularNuevoIntento<<<");
                 //console.dir(err);
                 throw new Error({mensaje: `error al actualizar el máximo de actualizaciones.`});
             });
@@ -87,7 +87,7 @@ class Usuario {
             try {
                 result = await this.Usuario.save();
             } catch (err) {
-                //console.log(">>>con error<<<");
+                //console.log(">>>codigoCelularVerificado<<<");
                 //console.dir(err);
                 return reject({ mensaje: 'error al guardar el usuario.' });
             }
@@ -98,6 +98,20 @@ class Usuario {
 
     usuarioBloqueado() {
         return new Promise((resolved, reject) => {});
+    }
+
+    guardandoDefaultContactos(){
+        return new Promise(async(resolved, reject)=>{
+            await this.Usuario.save()
+            .catch(
+                err => {
+                    console.log(">>>guardandoDefaultContactos<<<");
+                    console.dir(err);
+                    return reject();
+                }
+            );
+            resolved({mensaje: `Default Contacts actualizados exitosamente`});
+        });
     }
 
     guardandoContrasena(PropiedadExtra = {}) {
@@ -117,7 +131,7 @@ class Usuario {
             await this.Usuario.save()
                 .catch(
                     err => {
-                        console.log(">>>con error<<<");
+                        console.log(">>>guardandoContrasena<<<");
                         console.dir(err);
                         return reject({ mensaje: "error al guardar la contraseña." });
                     }
@@ -146,7 +160,7 @@ class Usuario {
 
                 await sgMail.send(msg);
             } catch (error) {
-                console.log(">>>con error<<<");
+                console.log(">>>enviandoCorreo<<<");
                 console.dir(error);
                 return reject({ mensaje: "error al enviar el correo." });
             }

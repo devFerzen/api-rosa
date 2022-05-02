@@ -18,6 +18,7 @@ export const typeDef = gql `
     inicioSesion(correo: String!, contrasena: String!): String!,
     cerrarSesion(input: String):String!,
     registroUsuario(input: UsuarioInput!): String!,
+    actualizacionDefaultContactos(input: [SecContactoInput]!):String!,
     actualizacionContrasena(contrasenaVieja: String!, contrasenaNueva: String!): String!,
     compararVerificacionCelular(input: String!):String!,
     compararVerificacionUsuario(input: String, usuario: String!, clean: Boolean!):String!,
@@ -237,6 +238,39 @@ export const resolvers = {
         },
 
         /*
+          actualizacionDefaultContactos: Actualización de contraseña que se hace dentro de una sesion del usuario.
+        */
+        async actualizacionDefaultContactos(parent, { input }, { Models, user }){
+            let ResultadoUsuario, Usuario, result;
+
+            /*Analizar su uso aqui, ya que ya se creo un plugin en el file permisos...if(!user){
+                throw new Error(JSON.stringify({ mensaje: `Favor de inicar Sesion`, pagina: 'home', componenteInterno:{ panelHerramientasInicioSesion: true, cerrarSesion: true } }));
+            }*/
+
+            try{
+                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'Default_Contactos': 1 }).exec();
+            }catch(err){
+                throw new Error(JSON.stringify({ mensaje: `Favor de inicar Sesion nuevamente y validar los cambios!`, pagina: 'home', componenteInterno:{ panelHerramientasInicioSesion: true, cerrarSesion: true } }));
+            }
+
+            console.log(`input`);
+            console.log(ResultadoUsuario);
+            console.dir(input);
+
+            if(!ResultadoUsuario){
+                throw new Error(JSON.stringify({ mensaje: `Favor de inicar Sesion nuevamente y validar los cambios!`, pagina: 'home', componenteInterno:{ panelHerramientasInicioSesion: true, cerrarSesion: true } }));
+            }
+            ResultadoUsuario.Default_Contactos = input;
+            Usuario = new UsuarioClass(ResultadoUsuario);
+
+            result = await Usuario.guardandoDefaultContactos().catch(err => {
+                throw new Error(JSON.stringify({ mensaje: `Error al querer actualizar los datos.` }));
+            });
+
+            return JSON.stringify({ mensaje: `${result.mensaje}` });
+
+        },
+        /*
           actualizacionContrasena: Actualización de contraseña que se hace dentro de una sesion del usuario.
         */
         async actualizacionContrasena(parent, { contrasenaVieja, contrasenaNueva }, { Models, user }) {
@@ -348,7 +382,7 @@ export const resolvers = {
                     throw new Error(JSON.stringify({ mensaje: `Error al guardar su verificación, favor de actualizar y verificar o hacer el proceso nuevamente.` }));
                 });
 
-            return JSON.stringify({ mensaje: `${result.mensaje}`, pagina: 'home', componenteInterno: { editAnuncioCardEnable: true, numerotelefonicoUsuario: true } });
+            return JSON.stringify({ mensaje: `${result.mensaje}`, pagina: 'dashboard', componenteInterno: { numerotelefonicoUsuario: true, panelHerramientasBusqueda: true } });
         },
 
         /*

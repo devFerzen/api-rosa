@@ -35,6 +35,7 @@ export default shield(
         cerrarSesion: paseLibre,
         registroUsuario: paseLibre,
         actualizacionContrasena: usuarioConAutoridad,
+        actualizacionDefaultContactos: usuarioConAutoridad,
         compararVerificacionCelular: paseLibre,
         compararVerificacionUsuario: paseLibre,
         solicitarRestablecerContrasena: paseLibre,

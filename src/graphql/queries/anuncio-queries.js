@@ -186,6 +186,12 @@ export const resolvers = {
                     return value;
                 }
             });
+
+            console.log(`ResultadoUsuario`);
+            console.dir(ResultadoUsuario);
+            
+            console.log(`anunciosRestantes`);
+            console.dir(anunciosRestantes);
             ResultadoUsuario.anuncios_usuario = anunciosRestantes;
             ResultadoUsuario.save();
 
