@@ -27,7 +27,7 @@ export const typeDef = gql `
     titulo: String!,
     estado: String!,
     ciudad: String!,
-    descripcion: String,
+    descripcion: String!,
     sexo: String
   }
 

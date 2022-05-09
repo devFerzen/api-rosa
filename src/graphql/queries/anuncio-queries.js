@@ -15,7 +15,7 @@ export const typeDef = gql `
 
   },
   extend type Mutation {
-    anuncioCreacion(input: AnuncioInput!): String!,
+    anuncioCreacion(input: AnuncioNewInput!): String!,
     anuncioActualizacion(input: AnuncioInput!): String!,
     anuncioEliminacion(id_anuncio: String!): String!,
     imagenEliminacion(input: String!): String!,
@@ -210,7 +210,7 @@ export const resolvers = {
                 await unlinkAsync(fileLocation);
             } catch (error) {
                 console.dir(error);
-                throw new Error(JSON.stringify({ mensaje: `Problemas al borrar el archivo.` }));
+                throw new Error(JSON.stringify({ componenteInterno: { activationAlert : { type: 'error', message: `Problemas al borrar el archivo.` }}}));
             }
             return JSON.stringify({ mensaje: `Imagen eliminada con éxito.` });
         },
