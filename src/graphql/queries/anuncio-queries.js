@@ -45,6 +45,9 @@ export const resolvers = {
 
             try {
                 QueryLimpia = Query.queryLimpiada();
+                console.log(`<<< QueryLimpia`);
+                console.dir(QueryLimpia);
+                
                 QueryResult = await Models.Anuncio.find(QueryLimpia).exec();
             } catch (err) {
                 console.dir(err)

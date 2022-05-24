@@ -21,15 +21,15 @@ class QueryAnuncio {
         Result['Estado.vivo'] = true;
 
         if (this.hasOwnProperty('busquedaBuscarPor')) {
-            Result['Sec_Descripcion.titulo'] = { '$regex': `.*${this.busquedaBuscarPor}*.` }
+            Result['Sec_Descripcion.titulo'] = { '$regex' : `.*${this.busquedaBuscarPor}*.`, '$options': 'i' }
         }
 
         if (this.hasOwnProperty('busquedaEstado')) {
-            Result['Sec_Descripcion.estado'] = { '$regex': `.*${this.busquedaEstado}*.` }
+            Result['Sec_Descripcion.estado'] = { '$regex': `.*${this.busquedaEstado}*.`, '$options': 'i' }
         }
 
         if (this.hasOwnProperty('busquedaCiudad')) {
-            Result['Sec_Descripcion.ciudad'] = { '$regex': `.*${this.busquedaCiudad}*.` }
+            Result['Sec_Descripcion.ciudad'] = { '$regex': `.*${this.busquedaCiudad}*.`, '$options': 'i' }
         }
 
         if (this.hasOwnProperty('busquedaSexo')) {

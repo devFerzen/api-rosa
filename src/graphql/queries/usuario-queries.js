@@ -196,8 +196,9 @@ export const resolvers = {
             let NuevoUsuario = await NuevoUsuarioModel.save()
                 .catch(
                     err => {
+                        let _mensaje = err.toString();
                         console.dir(err);
-                        throw new Error(JSON.stringify({ mensaje: `Error en la creación del usuario.` }));
+                        throw new Error(JSON.stringify({ mensaje: _mensaje.search("duplicate key error") > 0 ? 'Usuario duplicado, favor de iniciar sesion o reportar el caso con servicio al cliente.' : 'Error en la creación del usuario.' }));
                     }
                 );
 
@@ -373,7 +374,7 @@ export const resolvers = {
 
             if (ResultadoUsuario.codigo_verificacion_celular !== input) {
                 Usuario.verificacionCelularNuevoIntento();
-                throw new Error(JSON.stringify({ mensaje: `Código de verificación incorrecto, favor de validarlo.` }));
+                throw new Error(JSON.stringify({ mensaje: `Código de verificación incorrecto, favor de validarlo. Te restan ${5 - ResultadoUsuario.max_updates} intentos.` }));
             }
 
             //Se quita su bloquéo
