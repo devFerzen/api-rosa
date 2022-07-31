@@ -49,7 +49,7 @@ class QueryAnuncio {
             }
         }
 
-        console.log("Query Limpiada");
+        console.log("Query Limpiada... result");
         console.dir(Result);
         return Result;
     }

@@ -10,7 +10,7 @@ class Usuario {
         console.log(Usuario);
     }
 
-    //Manda a crear un Codigo de verificacion de Usuario
+    //Manda a crear un Codigo de verificacion de Usuario y si esta loggeado solo guarda la informacion nueva
     verificacionNuevoUsuario(estaLoggeado = false) {
         return new Promise(async(resolved, reject) => {
             console.log("verificacionNuevoUsuario...", estaLoggeado);
@@ -29,11 +29,13 @@ class Usuario {
                 .catch(err => {
                     console.log(">>>verificacionNuevoUsuario<<<");
                     console.dir(err);
-                    reject({mensaje: `error al querer actualizar a el usuario.`});
+                    reject({
+                      mensaje: `Error al tratar de actualizar el usuario, Favor de intentar de nuevo!.`,
+                    });
                     return;
                 });
 
-            resolved({ mensaje: "Favor de ingresar el código de verificación que se le fue enviado a su correo.!", "data": codigoVerificacion });
+            resolved({});
         });
     }
 
@@ -62,7 +64,7 @@ class Usuario {
                     reject({ mensaje: "error al querer guardar el usuario." });
                     return;
                 });
-            resolved({ mensaje: "Favor de ingresar el código de verificación que se le fue enviado a su correo.!", "data": codigoVerificacion });
+            resolved({ mensaje: "Favor de ingresar el código de verificación que se le fue enviado a su correo!.", "data": codigoVerificacion });
         });
 
     }
@@ -92,7 +94,7 @@ class Usuario {
                 return reject({ mensaje: 'error al guardar el usuario.' });
             }
 
-            resolved({ mensaje: "La verificación fue exitosa.!" });
+            resolved({ mensaje: "La verificación fue exitosa!." });
         });
     }
 
@@ -110,7 +112,7 @@ class Usuario {
                     return reject();
                 }
             );
-            resolved({mensaje: `Default Contacts actualizados exitosamente`});
+            resolved({mensaje: `Default Contacts actualizados exitosamente!.`});
         });
     }
 
@@ -124,7 +126,7 @@ class Usuario {
 
             this.Usuario.contrasena = await bcrypt.hash(this.Usuario.contrasenaNueva, 10).catch(
                 err => {
-                    return reject({ mensaje: "error en la encriptacion la contraseña." });
+                    return reject({ mensaje: "Error al tratar de guardar la contraseña!." });
                 }
             );
 
@@ -137,7 +139,7 @@ class Usuario {
                     }
                 );
 
-            resolved({ mensaje: "Contraseña guardada exitosamente.!" });
+            resolved();
         });
     }
 

@@ -1,356 +1,724 @@
-import gql from 'graphql-tag';
+import gql from "graphql-tag";
 
-import QueryAnuncio from '../../utilities/queryAnuncio'
-import UsuarioClass from '../../utilities/Usuario'
-import { crearBitacoraCreaciones, crearVerificacionAnuncio, crearBitacoraBusquedas } from '../../utilities/bitacoras'
-import path from 'path';
-import fs from 'fs';
-import { promisify } from 'util';
+import QueryAnuncio from "../../utilities/queryAnuncio";
+import UsuarioClass from "../../utilities/Usuario";
+import {
+  crearBitacoraCreaciones,
+  crearVerificacionAnuncio,
+  crearBitacoraBusquedas,
+} from "../../utilities/bitacoras";
+import path from "path";
+import fs from "fs";
+import { promisify } from "util";
 const unlinkAsync = promisify(fs.unlink);
 
-export const typeDef = gql `
+export const typeDef = gql`
   extend type Query {
-    queryAnunciosById(ids: [String]): [AnuncioType],
-    queryAnuncios(query: QueryAnuncioInput!): [AnuncioType],
-
-  },
+    queryAnunciosById(ids: [String]): [AnuncioType]
+    queryAnuncios(query: QueryAnuncioInput!): [AnuncioType]
+  }
   extend type Mutation {
-    anuncioCreacion(input: AnuncioNewInput!): String!,
-    anuncioActualizacion(input: AnuncioInput!): String!,
-    anuncioEliminacion(id_anuncio: String!): String!,
-    imagenEliminacion(input: String!): String!,
-    anunciolike(idAnuncio: String!): String!,
-    anuncioVista(idAnuncio: String!): String!,
-    solicitarVerificacionCelular: String!,
-    solicitarVerificacionAnuncio(id_anuncio: String!, foto_anuncio: String!): String!,
+    anuncioCreacion(input: AnuncioNewInput!): String!
+    anuncioActualizacion(input: AnuncioInput!): String!
+    anuncioEliminacion(id_anuncio: String!): String!
+    imagenEliminacion(input: String!): String!
+    anunciolike(idAnuncio: String!): String!
+    anuncioVista(idAnuncio: String!): String!
+    solicitarVerificacionCelular: String!
+    solicitarVerificacionAnuncio(
+      id_anuncio: String!
+      foto_anuncio: String!
+    ): String!
     anuncioResponderVerificacion(input: VerificacionInput!): String!
   }
 `;
 
 export const resolvers = {
-    Query: {
-        queryAnunciosById: async(_, { ids }, { Models }) => {
-            try {
-                return await Models.Anuncio.find({ _id: { $in: ids } })
-            } catch (error) {
-                console.dir(err)
-                throw new Error(err);
-            }
-        },
-        // Falta agregarle la projection, para solo traer especificamente esos datos
-        queryAnuncios: async(_, { query }, { Models }) => {
-            const Query = new QueryAnuncio(query);
-            let QueryLimpia = {};
-            let QueryResult;
+  Query: {
+    queryAnunciosById: async (_, { ids }, { Models }) => {
+      try {
+        return await Models.Anuncio.find({ _id: { $in: ids } });
+      } catch (error) {
+        console.log("nuevoContactoCliente... en error"); //guardar el input
+        console.dir(error);
 
-            try {
-                QueryLimpia = Query.queryLimpiada();
-                console.log(`<<< QueryLimpia`);
-                console.dir(QueryLimpia);
-                
-                QueryResult = await Models.Anuncio.find(QueryLimpia).exec();
-            } catch (err) {
-                console.dir(err)
-                throw new Error(err);
-            }
-            return QueryResult;
-        }
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`,
+            },
+          },
+        });
+      }
     },
-    Mutation: {
-        /*
+    // Falta agregarle la projection, para solo traer especificamente esos datos
+    queryAnuncios: async (_, { query }, { Models }) => {
+      const Query = new QueryAnuncio(query);
+      let QueryLimpia = {};
+
+      try {
+        QueryLimpia = Query.queryLimpiada();
+        console.log(`<<< QueryLimpia`);
+        console.dir(QueryLimpia);
+
+        return await Models.Anuncio.find(QueryLimpia).exec();
+      } catch (err) {
+        console.log("queryAnuncios... en error"); //guardar el input
+        console.dir(error);
+
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`,
+            },
+          },
+        });
+      }
+    },
+  },
+  Mutation: {
+    /*
           anuncioCreacion: 
         */
-        async anuncioCreacion(parent, { input }, { Models, user }) {
-            let ResultadoUsuario, Usuario;
+    async anuncioCreacion(parent, { input }, { Models, user }) {
+      let ResultadoUsuario, Usuario;
 
-            if (!user) {
-                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
-            }
+      if (!user) {
+        throw new Error(
+          JSON.stringify({
+            pagina: "home",
+            componenteInterno: {
+              panelHerramientasInicioSesion: true,
+              activationAlert: {
+                type: "error",
+                message: `Favor de Iniciar Sesion!.`,
+              },
+            },
+          })
+        );
+      }
 
-            try {
-                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'estado': 1, 'anuncios_usuario': 1, 'numero_telefonico_verificado': 1 })
-                    .exec();
-            } catch (err) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Favor de Iniciar Sesion.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
-            }
+      try {
+        ResultadoUsuario = await Models.Usuario.findById(user.id, {
+          max_updates: 1,
+          estado: 1,
+          anuncios_usuario: 1,
+          numero_telefonico_verificado: 1,
+        }).exec();
+      } catch (err) {
+        console.log("anuncioCreacion... en error");
+        console.dir(err)
 
-            if (!ResultadoUsuario) {
-                throw new Error(JSON.stringify({ mensaje: `Usuario no encontrado.`, pagina: 'home', componenteInterno: { panelHerramientasInicioSesion: true } }));
-            }
+        return JSON.stringify({
+          pagina: "home",
+          cerrarSesion: "",
+          componenteInterno: {
+            panelHerramientasInicioSesion: true,
+            activationAlert: {
+              type: "error",
+              message: `Favor de Iniciar Sesion!.`,
+            },
+          },
+        });
+      } //Llama a gql buscar usuario
 
-            if (!ResultadoUsuario.estado) {
-                throw new Error(JSON.stringify({ mensaje: `Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente.` }));
-            }
+      if (!ResultadoUsuario) {
+        throw new Error(
+          JSON.stringify({
+            pagina: "home",
+            componenteInterno: {
+              componenteInterno: { panelHerramientasInicioSesion: true },
+              activationAlert: {
+                type: "error",
+                message: `Error al tratar de encontrar al usuario.`,
+              },
+            },
+          })
+        );
+      } //Usuario no existe
 
-            Usuario = new UsuarioClass(ResultadoUsuario);
+      if (!ResultadoUsuario.estado) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente.`,
+              },
+            },
+          })
+        );
+      } // Usuario con cuenta bloqueda no le permite crear anuncios
 
-            if (!ResultadoUsuario.numero_telefonico_verificado) {
-                let result = await Usuario.verificacionNuevaCelular().catch(err => {
-                    //Registrar este error de usuario para atenderlo despues
-                    throw new Error(JSON.stringify({ mensaje: `Favor de intentar nuevamente o verificar tu número de celular registrado en la cuenta de lo contrario contactar a servicio al cliente.` }));
-                });
+      Usuario = new UsuarioClass(ResultadoUsuario);
 
-                //Este envío de correo es con el template Verificación!!
-                Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
-                    .catch(err => {
-                        //Registrar este error de usuario para atenderlo
-                        throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.` }));
-                    });
-                throw new Error(JSON.stringify({ mensaje: `Favor de validar el código verificación de celular.`, pagina: 'home', componenteInterno: { panelHerramientasVerificacion: true } }));
-            }
+      if (!ResultadoUsuario.numero_telefonico_verificado) {
+        let result = await Usuario.verificacionNuevaCelular().catch((err) => {
+          //Registrar este error de usuario para atenderlo despues
+          console.log("verificacionNuevaCelular... en error");
+          console.dir(err);
 
-            const AnuncioModel = new Models.Anuncio(input);
-            AnuncioModel.id_usuario = user.id;
+          return JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Favor de intentar nuevamente crear tu codigo de verificación, si el error persiste contactar a servicio al cliente.`,
+              },
+            },
+          });
+        });
 
-            //Salvando Anuncio
-            let NuevoAnuncio = await AnuncioModel.save()
-                .catch(
-                    err => {
-                        console.dir(err);
-                        throw new Error(JSON.stringify({ mensaje: `Error en el salvado del anuncio!` }));
-                    }
-                );
+        //Este envío de correo es con el template Verificación!!
+        Usuario.enviandoCorreo({
+          templateId: "d-42b7fb4fd59b48e4a293267f83c1523b",
+          codigoVerificacion: result.data,
+        }).catch((err) => {
+          //Registrar este error de usuario para atenderlo???
+          console.log("enviandoCorreo... en error");
+          console.dir(err);
 
-            //Salvando Id del nuevo anuncio la Creador
-            ResultadoUsuario.anuncios_usuario.unshift(NuevoAnuncio._id);
-            await ResultadoUsuario.save()
-                .catch(
-                    err => {
-                        console.dir(err);
-                        throw new Error(JSON.stringify({ mensaje: `Error en la actualización del Usuario!` }));
-                    }
-                );
+          return JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`,
+              },
+            },
+          });
+        });
 
-            const Bitacora = {
-                "Creacion": {
-                    "id_usuario": ResultadoUsuario.id,
-                    "estado": NuevoAnuncio.Sec_Descripcion.estado,
-                    "ciudad": NuevoAnuncio.Sec_Descripcion.ciudad,
-                    "categorias": NuevoAnuncio.categorias,
-                    "tipo": "Anuncio"
-                }
-            };
-            crearBitacoraCreaciones(Bitacora, 'count_anuncio');
+        throw new Error(
+          JSON.stringify({
+            pagina: "home",
+            componenteInterno: {
+              panelHerramientasVerificacion: true,
+              activationAlert: {
+                type: "error",
+                message: `Favor de validar el código verificación enviado hacia su celular primero!`,
+              },
+            },
+          })
+        );
+      }// Numero de telefono no verificado
 
-            return JSON.stringify({ mensaje: `Anunció creado con éxito.`, data: AnuncioModel });
+      const AnuncioModel = new Models.Anuncio(input);
+      AnuncioModel.id_usuario = user.id;
+
+      //Salvando Anuncio
+      let NuevoAnuncio = await AnuncioModel.save().catch((err) => {
+        console.log("AnuncioModel.save... en error");
+        console.dir(err);
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al intentar guardar el anuncio, favor validar los fomularios.`,
+            },
+          },
+        });
+      });
+
+      //Salvando Id del nuevo anuncio la Creador
+      ResultadoUsuario.anuncios_usuario.unshift(NuevoAnuncio._id);
+      await ResultadoUsuario.save().catch((err) => {
+        console.log("ResultadoUsuario.save... en error");
+        console.dir(err);
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al intentar actualizar su informacion, favor comunicarse con servicio al cliente`,
+            },
+          },
+        });
+      });
+
+      const Bitacora = {
+        Creacion: {
+          id_usuario: ResultadoUsuario.id,
+          estado: NuevoAnuncio.Sec_Descripcion.estado,
+          ciudad: NuevoAnuncio.Sec_Descripcion.ciudad,
+          categorias: NuevoAnuncio.categorias,
+          tipo: "Anuncio",
         },
+      };
+      crearBitacoraCreaciones(Bitacora, "count_anuncio");
 
-        /*
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Anunció creado con éxito!`,
+          },
+        },
+      });
+    },
+
+    /*
           anuncioVista: 
         */
-        async anuncioActualizacion(parent, { input }, { Models, user }) {
-            let ResultadoAnuncio;
-            console.log('anuncioActualizacion...');
+    async anuncioActualizacion(parent, { input }, { Models, user }) {
+      let ResultadoAnuncio;
 
-            try {
-                ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(input.id, { $set: input }, { timestamps: false, upsert: true, new: true }).lean().exec();
-            } catch (err) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Posible error en el id brindado.` }));
-            }
+      try {
+        ResultadoAnuncio = await Models.Anuncio.findByIdAndUpdate(
+          input.id,
+          { $set: input },
+          { timestamps: false, upsert: true, new: true }
+        )
+          .lean()
+          .exec();
+      } catch (err) {
+        console.log("anuncioActualizacion... en error");
+        console.dir(err);
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al intentar actualizar el anuncio!`,
+            },
+          },
+        });
+      }
 
-            if (!ResultadoAnuncio) {
-                throw new Error(JSON.stringify({ mensaje: `Anuncio no encontrado.` }));
-            }
-            console.dir(ResultadoAnuncio);
+      if (!ResultadoAnuncio) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Anuncio no encontrado!`,
+              },
+            },
+          })
+        );
+      }
 
-            return JSON.stringify({ mensaje: `Anuncio actualizado con éxito.`, data: ResultadoAnuncio });
+      console.dir(ResultadoAnuncio);
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Anuncio actualizado con éxito.`,
+          },
         },
+      });
+    },
 
-        /*
+    /*
           anuncioEliminacion: 
         */
-        async anuncioEliminacion(parent, { id_anuncio }, { Models, user }) {
-            let ResultadoAnuncio, ResultadoUsuario;
+    async anuncioEliminacion(parent, { id_anuncio }, { Models, user }) {
+      let ResultadoAnuncio, ResultadoUsuario;
 
-            //Se valida que sea el dueño del anuncio y se extrae la llamada en lean
-            try {
-                ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio).lean().exec();
-            } catch (err) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Posible error en el id brindado.` }));
-            }
+      //Se valida que sea el dueño del anuncio y se extrae la llamada en lean
+      try {
+        ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio)
+          .lean()
+          .exec();
+      } catch (err) {
+        console.log("anuncioEliminacion... en error");
+        console.dir(err);
 
-            if (!ResultadoAnuncio) {
-                throw new Error(JSON.stringify({ mensaje: `El anuncio proporcionado no fue encontrado.` }));
-            }
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Anuncio no encontrado!`,
+              },
+            },
+          })
+        );
+      }
 
-            if (user.id != ResultadoAnuncio.id_usuario) {
-                throw new Error(JSON.stringify({ mensaje: `No cuentas con los permisos suficientes de eliminar este anuncio.` }));
-            }
+      if (!ResultadoAnuncio) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Error en la busqueda del anuncio!`,
+              },
+            },
+          })
+        );
+      }
 
-            await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
+      if (user.id != ResultadoAnuncio.id_usuario) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `No cuentas con los permisos suficientes de eliminar este anuncio.`,
+              },
+            },
+          })
+        );
+      }
 
-            //Encontrar el usuario y actualizar su lista de anuncios
-            ResultadoUsuario = await Models.Usuario.findById(ResultadoAnuncio.id_usuario, { 'anuncios_usuario': 1 }).exec();
-            let anunciosRestantes = ResultadoUsuario.anuncios_usuario.filter((value, index) => {
-                if (value.toString() !== id_anuncio) {
-                    return value;
-                }
-            });
+      await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
 
-            console.log(`ResultadoUsuario`);
-            console.dir(ResultadoUsuario);
-            
-            console.log(`anunciosRestantes`);
-            console.dir(anunciosRestantes);
-            ResultadoUsuario.anuncios_usuario = anunciosRestantes;
-            ResultadoUsuario.save();
+      //Encontrar el usuario y actualizar su lista de anuncios
+      ResultadoUsuario = await Models.Usuario.findById(
+        ResultadoAnuncio.id_usuario,
+        { anuncios_usuario: 1 }
+      ).exec();
 
-            return JSON.stringify({ mensaje: `Anuncio eliminado con éxito.` });
+      let anunciosRestantes = ResultadoUsuario.anuncios_usuario.filter(
+        (value, index) => {
+          if (value.toString() !== id_anuncio) {
+            return value;
+          }
+        }
+      );
+
+      console.log(`ResultadoUsuario`);
+      console.dir(ResultadoUsuario);
+
+      console.log(`anunciosRestantes`);
+      console.dir(anunciosRestantes);
+
+      ResultadoUsuario.anuncios_usuario = anunciosRestantes;
+      ResultadoUsuario.save();
+
+      return JSON.stringify({
+        componenteInterno: {
+          anuncioEliminar: id_anuncio,
+          anuncioEditSet: {},
+          activationAlert: {
+            type: "success",
+            message: `Anuncio eliminado exitosamente!.`,
+          },
         },
+      });
+    },
 
-        async imagenEliminacion(parent, { input }, { Models, user }) {
-            console.log("imagenEliminacion...");
+    async imagenEliminacion(parent, { input }, { Models, user }) {
+      console.log("imagenEliminacion...");
 
-            try {
-                console.log("dirName...", __dirname);
-                const uploadPath = path.join(__dirname, '../../..', 'uploads');
-                const fileLocation = path.resolve(uploadPath, input);
-                console.log("input ", input, "uploadPath", uploadPath, "fileLocation", fileLocation);
-                //que se traiga en su lista de imagenes de aunicio la imagen y que esa actualice y elimine tmb
-                await unlinkAsync(fileLocation);
-            } catch (error) {
-                console.dir(error);
-                throw new Error(JSON.stringify({ componenteInterno: { activationAlert : { type: 'error', message: `Problemas al borrar el archivo.` }}}));
-            }
-            return JSON.stringify({ mensaje: `Imagen eliminada con éxito.` });
+      try {
+        console.log("dirName...", __dirname);
+        const uploadPath = path.join(__dirname, "../../..", "uploads");
+        const fileLocation = path.resolve(uploadPath, input);
+        console.log(
+          "input ",
+          input,
+          "uploadPath",
+          uploadPath,
+          "fileLocation",
+          fileLocation
+        );
+
+        //que se traiga en su lista de imagenes de aunicio la imagen y que esa actualice y elimine tmb
+        await unlinkAsync(fileLocation);
+      } catch (error) {
+        console.log("imagenEliminacion... en error");
+        console.dir(error);
+
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Problemas al borrar el archivo.`,
+            },
+          },
+        });
+      }
+
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Imagen eliminada con éxito!.`,
+          },
         },
+      });
+    },
 
-        /*
+    /*
           anuncioVista: 
         */
-        async anunciolike(parent, { idAnuncio }, { Models }) {
-            let ResultadoAnuncio;
+    async anunciolike(parent, { idAnuncio }, { Models }) {
+      let ResultadoAnuncio;
 
-            try {
-                ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_corazones').exec()
-            } catch (error) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Anuncio no Encontrado.` }));
-            }
+      try {
+        ResultadoAnuncio = await Models.Anuncio.findById(
+          idAnuncio,
+          "no_corazones"
+        ).exec();
+      } catch (error) {
+        console.log("anunciolike... en error");
+        console.dir(error);
 
-            if (!ResultadoAnuncio) {
-                throw new Error(JSON.stringify({ mensaje: `Error al intentar encontrar el anuncio.` }));
-            }
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al dar like al anuncio, favor de intentarlo más tarde!`,
+            },
+          },
+        });
+      }
 
-            ResultadoAnuncio.no_corazones++;
-            await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Error al actualizar el anuncio.` }));
-            });
-            return JSON.stringify({ mensaje: `Me encata enviado.` });
+      if (!ResultadoAnuncio) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Error al dar like al anuncio, favor de intentarlo más tarde!.`,
+              },
+            },
+          })
+        );
+      }
+
+      ResultadoAnuncio.no_corazones++;
+      ResultadoAnuncio.save({ timestamps: false });
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Me encanta enviado!.`,
+          },
         },
+      });
+    },
 
-        /*
+    /*
           anuncioVista: 
         */
-        async anuncioVista(parent, { idAnuncio }, { Models }) {
-            let ResultadoAnuncio;
+    async anuncioVista(parent, { idAnuncio }, { Models }) {
+      let ResultadoAnuncio;
 
-            try {
-                ResultadoAnuncio = await Models.Anuncio.findById(idAnuncio, 'no_vistas').exec()
-            } catch (error) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Anuncio no Encontrado.` }));
-            }
+      try {
+        ResultadoAnuncio = await Models.Anuncio.findById(
+          idAnuncio,
+          "no_vistas"
+        ).exec();
+      } catch (error) {
+        console.log("anunciolike... en error");
+        console.dir(error);
 
-            if (!ResultadoAnuncio) {
-                throw new Error(JSON.stringify({ mensaje: `Error al intentar encontrar el anuncio.` }));
-            }
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Anuncio no Encontrado!.`,
+            },
+          },
+        });
+      }
 
-            ResultadoAnuncio.no_vistas++;
-            await ResultadoAnuncio.save({ timestamps: false }).catch(err => {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Error al actualizar el anuncio.` }));
-            });
-            return JSON.stringify({ mensaje: `Éxito en la vista.` });
+      if (!ResultadoAnuncio) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Error al intentar encontrar el anuncio!.`,
+              },
+            },
+          })
+        );
+      }
+
+      ResultadoAnuncio.no_vistas++;
+      ResultadoAnuncio.save({ timestamps: false });
+
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Éxito en la vista!.`,
+          },
         },
+      });
+    },
 
-        /*
+    /*
           solicitarVerificacionCelular: Se le asigna un código al usuario para pasar a verificar su identidad.
         */
-        async solicitarVerificacionCelular(parent, params, { Models, user }) {
-            let ResultadoUsuario, Usuario, result;
+    async solicitarVerificacionCelular(parent, params, { Models, user }) {
+      let ResultadoUsuario, Usuario, result;
 
-            try {
-                ResultadoUsuario = await Models.Usuario.findById(user.id, { 'max_updates': 1, 'codigo_verificacion_celular': 1, 'numero_telefonico_verificado': 1 }).exec();
-            } catch (err) {
-                console.dir(err)
-                throw new Error(JSON.stringify({ mensaje: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.` }));
-            }
+      try {
+        ResultadoUsuario = await Models.Usuario.findById(user.id, {
+          max_updates: 1,
+          codigo_verificacion_celular: 1,
+          numero_telefonico_verificado: 1,
+        }).exec();
+      } catch (err) {
+        console.dir(err);
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.`,
+            },
+          },
+        });
+      }
 
-            if (!ResultadoUsuario) {
-                throw new Error(JSON.stringify({ mensaje: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.` }));
-            }
+      if (!ResultadoUsuario) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.`,
+              },
+            },
+          })
+        );
+      }
 
-            Usuario = new UsuarioClass(ResultadoUsuario);
-            result = await Usuario.verificacionNuevaCelular()
-                .catch(err => {
-                    console.dir(err)
-                    throw new Error(JSON.stringify({ mensaje: ` ${err.mensaje}` }));
-                });
+      Usuario = new UsuarioClass(ResultadoUsuario);
 
-            //Este envío de correo es con el template Verificación!!
-            Usuario.enviandoCorreo({ templateId: 'd-42b7fb4fd59b48e4a293267f83c1523b', codigoVerificacion: result.data })
-                .catch(err => {
-                    throw new Error(JSON.stringify({ mensaje: `Favor de validar su correo o comunicarse con servicio al cliente.` }));
-                });
+      result = await Usuario.verificacionNuevaCelular();
 
-            return JSON.stringify({ mensaje: `${result.mensaje}, favor de validar su correo.`, pagina: 'home', componenteInterno: { panelHerramientasVerificacion: true, setTipoVerificacion: 'verificacionUsuarioCelular' } });
+      //Este envío de correo es con el template Verificación!!
+      Usuario.enviandoCorreo({
+        templateId: "d-42b7fb4fd59b48e4a293267f83c1523b",
+        codigoVerificacion: result.data,
+      }).catch((err) => {
+        console.log("enviandoCorreo... en error");
+        console.dir(err);
+
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Favor de volver a iniciar sesion e intentarlo nuevamente o contactar a servicio al cliente.`,
+            },
+          },
+        });
+      });
+
+      return JSON.stringify({
+        pagina: "home",
+        componenteInterno: {
+          panelHerramientasVerificacion: true,
+          setTipoVerificacion: "verificacionUsuarioCelular",
+          activationAlert: {
+            type: "success",
+            message: `${result.mensaje}`,
+          },
         },
+      });
+    },
 
-        //aqui este es nuevo
-        async solicitarVerificacionAnuncio(parent, { id_anuncio, foto_anuncio }, { Models }) {
+    //aqui este es nuevo
+    async solicitarVerificacionAnuncio(
+      parent,
+      { id_anuncio, foto_anuncio },
+      { Models }
+    ) {
+      const BitacoraInfo = {
+        id_anuncio: id_anuncio,
+        foto_anuncio: foto_anuncio,
+      };
+      let result = crearVerificacionAnuncio(BitacoraInfo);
 
-            const BitacoraInfo = {
-                "id_anuncio": id_anuncio,
-                "foto_anuncio": foto_anuncio,
-            };
-            let result = crearVerificacionAnuncio(BitacoraInfo);
-            if (!result) {
-                throw new Error(JSON.stringify({ mensaje: `Favor de intentarlo nuevamente o comunicarse con servicio al cliente.` }));
-            }
+      if (!result) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Favor de intentarlo nuevamente o comunicarse con servicio al cliente.`,
+              },
+            },
+          })
+        );
+      }
 
-            return JSON.stringify({ mensaje: `Solicitud de verificación enviada con éxito.` });
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Solicitud de verificación enviada con éxito, espere la repsuesta pronto!.`,
+          },
         },
+      });
+    },
 
-        /*
+    /*
           anuncioResponderVerificacion: Contesta una verificación de anuncio.
           Pendiente* Permiso solo para ejecutivos
         */
-        async anuncioResponderVerificacion(parent, { input }, { Models }) {
-            let ResultadoUsuario;
-            try {
-                ResultadoUsuario = await Models.AnunciosEnVerificacion.findById(input.id_verificacion).exec();
-            } catch (error) {
-                console.dir(err);
-                throw new Error(JSON.stringify({ mensaje: `Verificación no encontrado.` }));
-            }
+    async anuncioResponderVerificacion(parent, { input }, { Models }) {
+      let ResultadoUsuario;
+      try {
+        ResultadoUsuario = await Models.AnunciosEnVerificacion.findById(
+          input.id_verificacion
+        ).exec();
+      } catch (error) {
+        console.log("enviandoCorreo... en error");
+        console.dir(err);
 
-            if (!ResultadoUsuario) {
-                throw new Error(JSON.stringify({ mensaje: `Verificación no encontrada.` }));
-            }
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Verificación no encontrada!.`,
+            },
+          },
+        });
+      }
 
-            const activationDate = new Date();
-            const hoyEs = new Date(activationDate.getUTCFullYear(),
-                activationDate.getUTCMonth(),
-                activationDate.getUTCDate(),
-                activationDate.getUTCHours(),
-                activationDate.getUTCMinutes(),
-                activationDate.getUTCSeconds()
-            );
+      if (!ResultadoUsuario) {
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Verificación no encontrada!.`,
+              },
+            },
+          })
+        );
+      }
 
-            ResultadoUsuario.respuesta = input.respuesta;
-            ResultadoUsuario.comentario = input.comentario;
-            ResultadoUsuario.fecha_respuesta = hoyEs;
-            await ResultadoUsuario.save().catch(err => {
-                throw new Error(JSON.stringify({ mensaje: `Error al actualizar verificación.` }));
-            });
+      const activationDate = new Date();
+      const hoyEs = new Date(
+        activationDate.getUTCFullYear(),
+        activationDate.getUTCMonth(),
+        activationDate.getUTCDate(),
+        activationDate.getUTCHours(),
+        activationDate.getUTCMinutes(),
+        activationDate.getUTCSeconds()
+      );
 
-            return JSON.stringify({ mensaje: `Verificación actualizada con éxito.` });
-        }
+      ResultadoUsuario.respuesta = input.respuesta;
+      ResultadoUsuario.comentario = input.comentario;
+      ResultadoUsuario.fecha_respuesta = hoyEs;
+      await ResultadoUsuario.save().catch((err) => {
+        console.log("ResultadoUsuario.save... en error")
+        console.dir(err)
 
-    }
-}
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al actualizar verificación!.`,
+            },
+          },
+        });
+      });
+
+      return JSON.stringify({
+        componenteInterno: {
+          activationAlert: {
+            type: "success",
+            message: `Verificación actualizada con éxito!.`,
+          },
+        },
+      });
+    },
+  },
+};

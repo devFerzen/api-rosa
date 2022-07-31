@@ -1,8 +1,8 @@
 import { ApolloServer } from 'apollo-server-express';
-import { applyMiddleware } from "graphql-middleware";
+import { applyMiddleware } from 'graphql-middleware';
 import express from 'express'; //express-graphql or express
 import jwt from 'jsonwebtoken';
-import jwt_decode from "jwt-decode";
+import jwt_decode from 'jwt-decode';
 
 import graphqlSchema from './graphql/schema';
 /* AFSS - Investigación pendiente
@@ -14,7 +14,6 @@ import cors from 'cors';
 import cookieParser from "cookie-parser";
 import permissions from './graphql/permisos';
 import mongoose from 'mongoose';
-import config from 'config';
 import morgan from 'morgan';
 import multer from 'multer';
 import path from 'path';
@@ -24,7 +23,7 @@ import Models from './graphql/models';
 
 //Conexión MongoDb
 mongoose.set('debug', false);
-mongoose.connect(`${config.mongoUrl}`, {
+mongoose.connect(`${process.env.mongoUrl}`, {
         useUnifiedTopology: true,
         useNewUrlParser: true,
         useFindAndModify: false
@@ -32,7 +31,7 @@ mongoose.connect(`${config.mongoUrl}`, {
     .catch(err => console.log("DB No se Conecto... (T.T)"));
 
 //Server and env Config
-const port = process.env.PORT || 4000;
+const port = process.env.port || 3000;
 const app = express();
 
 const corsOption = {
@@ -123,7 +122,7 @@ app.use(async function(req, res, next) {
                             const { autorizacion_token, actualizacion_token } = creacionToken(UsuarioLoggeado);
                             console.log(">>> Nuevas Tokens");
 
-                            res.cookie("auth-token", autorizacion_token, {
+                            /*res.cookie("auth-token", autorizacion_token, {
                                 sameSite: 'strict',
                                 path: '/',
                                 expire: new Date(new Date().getTime() + 60 * 60000),
@@ -135,8 +134,9 @@ app.use(async function(req, res, next) {
                             });
 
                             req.user = {
-                                id: UsuarioLoggeado._id,
-                            };
+                              id: UsuarioLoggeado._id,
+                              numero_telefonico_verificado: UsuarioLoggeado.numero_telefonico_verificado
+                            };*/
                         } else {
                             console.log(">>> Auth verify con error");
                             tokenAcceso = false;
@@ -248,7 +248,7 @@ const server = new ApolloServer({
     schema: applyMiddleware(
         graphqlSchema
     ),
-    graphiql: process.env.NODE_ENV != 'production' ? true : false,
+    graphiql: process.env.NODE_ENV === 'dev' ? true : false,
     context: apolloContext
 });
 server.applyMiddleware({ app, cors: corsOption }); //overriding cors made by express https://stackoverflow.com/questions/54485239/apollo-server-express-cors-issue
