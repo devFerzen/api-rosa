@@ -163,7 +163,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar encontrar su Usuario, favor de volver a intentar o comunicarse al servicio al cliente!.`,
+              message: `Usuario no encontrado, favor de validar su correo o comunicarse al servicio al cliente!.`,
             },
           },
         });
@@ -175,22 +175,23 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Usuario no existe!`,
+                message: `Usuario no encontrado, favor de validar su correo o comunicarse al servicio al cliente!.`,
               },
             },
           })
         );
       }
 
-      //Cuenta con bloqueo
+      //Cuenta con bloqueo, debe de validar su correo (verificacionUsuarioContrasena...analizar los tipos ???)
       if (UsuarioLoggeado.codigo_verificacion_usuario != undefined) {
         throw new Error(
           JSON.stringify({
             pagina: "home",
             componenteInterno: {
               activationAlert: {
-                type: "warning",
-                message: `Haz excedido el limite de intentos favor de validar su correo.`,
+                type: "warning",                                  
+                message: 
+                "Favor de validar tu cuenta, con el código de verificación que se le ha enviado a su correo!.",
               },
               panelHerramientasVerificacion: true,
               setTipoVerificacion: "verificacionUsuarioContrasena",
@@ -222,7 +223,7 @@ export const resolvers = {
                 activationAlert: {
                   type: "error",
                   message:
-                    error.mensaje || `Error en la creación de verificacion!.`,
+                    err.mensaje || `Error en la creación de verificacion!.`,
                 },
               },
             });
@@ -238,7 +239,7 @@ export const resolvers = {
                 activationAlert: {
                   type: "error",
                   message:
-                    "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente.",
+                    "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.",
                 },
               },
             });
@@ -266,16 +267,17 @@ export const resolvers = {
           JSON.stringify({
             componenteInterno: {
               activationAlert: {
-                type: "error",
+                type: "warning",
                 message: `Contraseña Incorrecta! Te restan ${
                   5 - UsuarioLoggeado.max_intentos
-                } intentos.!`,
+                } intentos!.`,
               },
             },
           })
         );
       } //Validacion de intentos
 
+      //
       Models.Usuario.findByIdAndUpdate(UsuarioLoggeado._id, {
         $set: { max_intentos: 0, codigo_verificacion_usuario: null },
       })
@@ -315,8 +317,6 @@ export const resolvers = {
           panelHerramientasBusqueda: true,
           setSesion: UsuarioLoggeado
         },
-        setSesion: UsuarioLoggeado,
-        panelHerramientasBusqueda: true,
       });
     },
 
@@ -355,7 +355,7 @@ export const resolvers = {
               componenteInterno: {
                 activationAlert: {
                   type: "error",
-                  message: "Error en la encriptacion de la contraseña.",
+                  message: "Error al intentar guardar la contraseña, favor de intentarlo de nuevo o comunicarse con servicio al cliente!.",
                 },
               },
             })
@@ -371,11 +371,11 @@ export const resolvers = {
         return JSON.stringify({
           componenteInterno: {
             activationAlert: {
-              type: "success",
+              type: "error",
               message:
                 _mensaje.search("duplicate key error") > 0
-                  ? "Usuario duplicado, favor de iniciar sesion o reportar el caso con servicio al cliente."
-                  : "Error en la creación del usuario.",
+                  ? "Usuario duplicado, favor de iniciar sesion o reportar el caso con servicio al cliente!."
+                  : "Error al tratar de crear el usuario, favor de intentarlo de nuevo o comunicarse con servicio al cliente!.",
             },
           },
         });
@@ -419,7 +419,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Envío fallido, favor de validar su correo o comunicarse con servicio al cliente!`,
+              message: `Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.`,
             },
           },
         });
@@ -429,8 +429,8 @@ export const resolvers = {
         pagina: "dashboard",
         componenteInterno: {
           activationAlert: { type: "success", message: "Bienvenido!" },
-          setSesion: NuevoUsuarioModel,
           panelHerramientasBusqueda: true,
+          setSesion: NuevoUsuarioModel,
         },
       });
     },
@@ -665,7 +665,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Error inesperado, Favor de intentar de iniciar Sesion nuevamente!.`,
+                message: `Error inesperado, Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
               },
             },
           })
@@ -678,7 +678,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Usuario no existe, favor de validar su usuario!.`,
+                message: `Usuario no encontrado, favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
               },
             },
           })
@@ -696,7 +696,7 @@ export const resolvers = {
               componenteInterno: {
                 activationAlert: {
                   type: "error",
-                  message: `Favor de actualizar eh intentarlo nuevamente o contactar a servicio al cliente!.`,
+                  message: `Error inesperado, Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
                 },
               },
             })
@@ -731,7 +731,7 @@ export const resolvers = {
               activationAlert: {
                 type: "error",
                 message:
-                  "Haz excedido el limite de intentos favor de validar tu cuenta, con el código de verificación que se le ha enviado a su celular!.",
+                  "Haz excedido el limite de intentos favor de validar su cuenta con el código de verificación que se le ha enviado a su celular!.",
               },
             },
           })
@@ -745,8 +745,7 @@ export const resolvers = {
           return JSON.stringify({
             activationAlert: {
               type: "error",
-              message:
-                "Favor de intentar nuevamente o contactar a servicio al cliente!",
+              message: "Error inesperado, favor de intentarlo de nuevo!.",
             },
           });
         });
@@ -778,7 +777,7 @@ export const resolvers = {
               activationAlert: {
                 type: "error",
                 message:
-                  "Se le ha enviado una código de verificación a su correo, favor de verificarlo!.",
+                  "Favor de validar su cuenta con el código de verificación enviado a su celular!.",
               },
             },
           })
@@ -791,8 +790,8 @@ export const resolvers = {
           JSON.stringify({
             componenteInterno: {
               activationAlert: {
-                type: "error",
-                message: `Código de verificación incorrecto, favor de validarlo. Te restan ${
+                type: "warning",
+                message: `Código de verificación incorrecto, Te restan ${
                   5 - ResultadoUsuario.max_updates
                 } intentos.`,
               },
@@ -810,7 +809,7 @@ export const resolvers = {
             activationAlert: {
               type: "error",
               message:
-                "Error al guardar su verificación, favor de actualizar y verificar o hacer el proceso nuevamente.",
+                "Error inesperado, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.",
             },
           },
         });
@@ -930,7 +929,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente.!`,
+              message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
             },
           },
         });
@@ -942,7 +941,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente.!`,
+                message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
               },
             },
           })
@@ -978,7 +977,7 @@ export const resolvers = {
               activationAlert: {
                 type: "error",
                 message:
-                  "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente.",
+                  "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.",
               },
             },
           });
@@ -992,7 +991,7 @@ export const resolvers = {
               setCorreo: correo,
               activationAlert: {
                 type: "warning",
-                message: `Haz excedido el limite de intentos favor de validar su cuenta en su correo.`,
+                message: `Haz excedido el limite de intentos favor de validar su cuenta en su correo!.`,
               },
               panelHerramientasVerificacion: true,
             },
@@ -1018,6 +1017,7 @@ export const resolvers = {
 
       //agregar un input extra e si esta activo eliminar el codigo de verificacion, que pase por default false y solo
       //en la accion de excederse del limite de 5 de inicio de sesion este lo mandará como verdaro
+      //Analizar, este es un guardado normal
       if (clean) {
         Usuario.verificacionNuevoUsuario(true).catch((err) => {
           return JSON.stringify({
@@ -1054,7 +1054,7 @@ export const resolvers = {
           setVerificacionUsuario: input,
           activationAlert: {
             type: "success",
-            message: "Verificación de usuario con Éxito!.",
+            message: "Verificación de usuario con éxito!.",
           },
         },
       });
@@ -1080,7 +1080,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Usuario no validado.!`,
+                message: `Favor de Iniciar sesion y intentarlo de nuevo!.`,
               },
             },
           })
@@ -1088,7 +1088,8 @@ export const resolvers = {
       }
       console.dir(user);
 
-      //busqueda de usuadio
+      //busqueda de usuario
+      //Analizar - usar el Id de context
       try {
         ResultadoUsuario = await Models.Usuario.findOne(
           { usuario: usuario },
@@ -1100,7 +1101,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Posible error en el id brindado o Usuario no encontrado!`,
+              message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -1117,7 +1118,7 @@ export const resolvers = {
               panelHerramientasInicioSesion: true,
               activationAlert: {
                 type: `error`,
-                message: `Sea ha cerrado cuenta por inactividad, favor de Iniciar Sesion Nuevamente`,
+                message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -1134,6 +1135,7 @@ export const resolvers = {
         input
       );
 
+      //Analizar uso
       if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
          Usuario.verificacionNuevoUsuario(true).catch((err) => {
            return JSON.stringify({
@@ -1169,8 +1171,7 @@ export const resolvers = {
              componenteInterno: {
                activationAlert: {
                  type: `error`,
-                 //Aqui creo que es a cu correo electronico
-                 message: `No pudimos actualizar su contraseña correctamente, le enviaremos un nuevo código de verificación a sus cuentas!.`,
+                 message: `No pudimos actualizar su contraseña correctamente, le enviaremos un nuevo código de verificación a correo!.`,
                },
              },
            })
@@ -1185,7 +1186,7 @@ export const resolvers = {
               panelHerramientasInicioSesion: true,
               activationAlert: {
                 type: `error`,
-                message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
+                message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -1199,7 +1200,7 @@ export const resolvers = {
             panelHerramientasInicioSesion: true,
             activationAlert: {
               type: `error`,
-              message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
+              message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -1216,7 +1217,7 @@ export const resolvers = {
           panelHerramientasInicioSesion: true,
           activationAlert: {
             type: `success`,
-            message: `Contraseña actualizada!. Favor de Iniciar Sesion nuevamente.`,
+            message: `Contraseña actualizada, favor de Iniciar Sesion nuevamente!.`,
           },
         },
       });

@@ -75,6 +75,7 @@ export const resolvers = {
       try {
         const CorreoModel = new Models.Correo(input);
         await CorreoModel.save();
+
       } catch (error) {
         console.log("nuevoContactoCliente... en error"); //guardar el input
         console.dir(error)
@@ -83,7 +84,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al mandar el correo!`,
+              message: `Error al tratar de mandar el correo, favor de validarlo e intentarlo de nuevo!.`,
             },
           },
         });
@@ -94,7 +95,7 @@ export const resolvers = {
           panelHerramientasBusqueda: true,
           activationAlert: {
             type: "success",
-            message: `Anuncio reportado!, Gracias por su cooperación!`,
+            message: `Correo enviado con éxito!.`,
           },
         },
       });

@@ -39,14 +39,14 @@ export const resolvers = {
       try {
         return await Models.Anuncio.find({ _id: { $in: ids } });
       } catch (error) {
-        console.log("nuevoContactoCliente... en error"); //guardar el input
+        console.log("queryAnunciosById... en error"); //guardar el input
         console.dir(error);
 
         return JSON.stringify({
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`,
+              message: `Lo sentimos anuncio no encontrado!.`,
             },
           },
         });
@@ -93,7 +93,7 @@ export const resolvers = {
               panelHerramientasInicioSesion: true,
               activationAlert: {
                 type: "error",
-                message: `Favor de Iniciar Sesion!.`,
+                message: `Sesión cerrada por inactividad, favor de iniciar sesión nuevamente!.`,
               },
             },
           })
@@ -109,7 +109,7 @@ export const resolvers = {
         }).exec();
       } catch (err) {
         console.log("anuncioCreacion... en error");
-        console.dir(err)
+        console.dir(err);
 
         return JSON.stringify({
           pagina: "home",
@@ -118,7 +118,7 @@ export const resolvers = {
             panelHerramientasInicioSesion: true,
             activationAlert: {
               type: "error",
-              message: `Favor de Iniciar Sesion!.`,
+              message: `Creación de anuncio con error, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -132,7 +132,7 @@ export const resolvers = {
               componenteInterno: { panelHerramientasInicioSesion: true },
               activationAlert: {
                 type: "error",
-                message: `Error al tratar de encontrar al usuario.`,
+                message: `Usuario no valido, favor de iniciar sesión nuevamente o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -164,7 +164,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Favor de intentar nuevamente crear tu codigo de verificación, si el error persiste contactar a servicio al cliente.`,
+                message: `Error inesperado celular no verificado, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
               },
             },
           });
@@ -183,7 +183,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Favor de validar su correo y intentarlo nuevamente o comunicarse con servicio al cliente.`,
+                message: 'Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.',
               },
             },
           });
@@ -195,13 +195,13 @@ export const resolvers = {
             componenteInterno: {
               panelHerramientasVerificacion: true,
               activationAlert: {
-                type: "error",
-                message: `Favor de validar el código verificación enviado hacia su celular primero!`,
+                type: "warning",
+                message: `Favor de validar su cuenta con el código de verificación que se le ha enviado a su celular!.`,
               },
             },
           })
         );
-      }// Numero de telefono no verificado
+      } // Numero de telefono no verificado
 
       const AnuncioModel = new Models.Anuncio(input);
       AnuncioModel.id_usuario = user.id;
@@ -214,7 +214,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar guardar el anuncio, favor validar los fomularios.`,
+              message: `Error al intentar guardar el anuncio, favor validar los fomularios!.`,
             },
           },
         });
@@ -229,7 +229,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar actualizar su informacion, favor comunicarse con servicio al cliente`,
+              message: `Error al intentar actualizar su informacion, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -257,7 +257,7 @@ export const resolvers = {
     },
 
     /*
-          anuncioVista: 
+          anuncioActualizacion: 
         */
     async anuncioActualizacion(parent, { input }, { Models, user }) {
       let ResultadoAnuncio;
@@ -277,7 +277,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar actualizar el anuncio!`,
+              message: `Error al intentar actualizar el anuncio, favor validar los fomularios o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -289,7 +289,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Anuncio no encontrado!`,
+                message: `Anuncio no encontrado, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -299,9 +299,10 @@ export const resolvers = {
       console.dir(ResultadoAnuncio);
       return JSON.stringify({
         componenteInterno: {
+          anuncioAgregarNuevo: input,
           activationAlert: {
             type: "success",
-            message: `Anuncio actualizado con éxito.`,
+            message: `Anuncio actualizado con éxito!.`,
           },
         },
       });
@@ -327,7 +328,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Anuncio no encontrado!`,
+                message: `Anuncio no encontrado, favor de actualizar o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -340,7 +341,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Error en la busqueda del anuncio!`,
+                message: `Anuncio no encontrado, favor de actualizar o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -353,7 +354,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `No cuentas con los permisos suficientes de eliminar este anuncio.`,
+                message: `No cuentas con los permisos suficientes de eliminar este anuncio!.`,
               },
             },
           })
@@ -440,7 +441,7 @@ export const resolvers = {
     },
 
     /*
-          anuncioVista: 
+          anunciolike: 
         */
     async anunciolike(parent, { idAnuncio }, { Models }) {
       let ResultadoAnuncio;
@@ -501,14 +502,14 @@ export const resolvers = {
           "no_vistas"
         ).exec();
       } catch (error) {
-        console.log("anunciolike... en error");
+        console.log("anuncioVista... en error");
         console.dir(error);
 
         return JSON.stringify({
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Anuncio no Encontrado!.`,
+              message: `Anuncio no Encontrado, favor de actualizar e intentarlo de nuevo!.`,
             },
           },
         });
@@ -520,7 +521,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Error al intentar encontrar el anuncio!.`,
+                message: `Anuncio no Encontrado, favor de actualizar e intentarlo de nuevo!.`,
               },
             },
           })
@@ -698,8 +699,8 @@ export const resolvers = {
       ResultadoUsuario.comentario = input.comentario;
       ResultadoUsuario.fecha_respuesta = hoyEs;
       await ResultadoUsuario.save().catch((err) => {
-        console.log("ResultadoUsuario.save... en error")
-        console.dir(err)
+        console.log("ResultadoUsuario.save... en error");
+        console.dir(err);
 
         return JSON.stringify({
           componenteInterno: {

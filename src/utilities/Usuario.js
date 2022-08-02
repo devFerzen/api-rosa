@@ -30,7 +30,7 @@ class Usuario {
                     console.log(">>>verificacionNuevoUsuario<<<");
                     console.dir(err);
                     reject({
-                      mensaje: `Error al tratar de actualizar el usuario, Favor de intentar de nuevo!.`,
+                      mensaje: `Error al tratar de crear su código de verificación, Favor de intentar de nuevo o comunicarse al servicio al cliente!.`,
                     });
                     return;
                 });
@@ -94,7 +94,7 @@ class Usuario {
                 return reject({ mensaje: 'error al guardar el usuario.' });
             }
 
-            resolved({ mensaje: "La verificación fue exitosa!." });
+            resolved({ mensaje: "Verificación fue exitosa!." });
         });
     }
 
