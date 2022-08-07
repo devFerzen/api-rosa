@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 //Pendiente validaciones y maximo de caracteres
 
 const contactoSchema = new Schema({
@@ -24,37 +24,41 @@ const imagenSchema = new Schema({
     url: { type: String, default: undefined }
 });
 
-const anuncioSchema = new Schema({
+const anuncioSchema = new Schema(
+  {
+    _id: { type: Schema.Types.ObjectId, required: true },
     categorias: { type: [String], required: true },
     permisos: { type: [String], required: true },
     Sec_Descripcion: {
-        titulo: { type: String, maxlength: 25, required: true },
-        estado: { type: String, required: true },
-        ciudad: { type: String, required: true },
-        descripcion: { type: String, required: true },
-        sexo: { type: String, required: true }
+      titulo: { type: String, maxlength: 25, required: true },
+      estado: { type: String, required: true },
+      ciudad: { type: String, required: true },
+      descripcion: { type: String, required: true },
+      sexo: { type: String, required: true },
     },
     Sec_Contacto: { type: [contactoSchema], default: undefined },
     Sec_Tarifas: { type: [tarifaSchema], default: undefined },
     Sec_Imagenes: { type: [imagenSchema], default: undefined },
     Estado: {
-        vivo: { type: Boolean, default: true },
-        mensaje: { type: String, default: undefined }
+      vivo: { type: Boolean, default: true },
+      mensaje: { type: String, default: undefined },
     },
     no_corazones: { type: Number, default: 0 },
     no_vistas: { type: Number, default: 0 },
     Destacado: {
-        fecha_creacion: { type: Date, default: undefined },
-        fecha_vencimiento: { type: Date, default: undefined }
+      fecha_creacion: { type: Date, default: undefined },
+      fecha_vencimiento: { type: Date, default: undefined },
     },
     verificado: { type: Boolean, default: false },
     id_usuario: { type: String, required: true },
-}, {
+  },
+  {
     timestamps: {
-        createdAt: 'fecha_creacion',
-        updatedAt: 'fecha_actualizacion'
-    }
-});
+      createdAt: "fecha_creacion",
+      updatedAt: "fecha_actualizacion",
+    },
+  }
+);
 
 const anuncio = model('anuncio', anuncioSchema);
 export default anuncio;

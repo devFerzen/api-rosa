@@ -151,10 +151,8 @@ export const resolvers = {
       try {
         UsuarioLoggeado = await Models.Usuario.findOne(
           { usuario: correo, estado: true },
-          {}
-        )
-          .populate("anuncios_usuario")
-          .exec();
+          { max_intentos: 1, codigo_verificacion_usuario: 1, contrasena: 1 }
+        ).exec();
       } catch (err) {
         console.log("inicioSesion... en error");
         console.dir(err);
@@ -163,7 +161,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Usuario no encontrado, favor de validar su correo o comunicarse al servicio al cliente!.`,
+              message: `Error inesperado, favor de validar su correo o comunicarse al servicio al cliente!.`,
             },
           },
         });
@@ -182,19 +180,19 @@ export const resolvers = {
         );
       }
 
-      //Cuenta con bloqueo, debe de validar su correo (verificacionUsuarioContrasena...analizar los tipos ???)
+      //Cuenta ya con un bloqueo de tipo verificacion usuario, debe de validar su correo
       if (UsuarioLoggeado.codigo_verificacion_usuario != undefined) {
         throw new Error(
           JSON.stringify({
             pagina: "home",
             componenteInterno: {
+              setTipoVerificacion: "verificacionUsuarioContrasena",
               activationAlert: {
-                type: "warning",                                  
-                message: 
-                "Favor de validar tu cuenta, con el código de verificación que se le ha enviado a su correo!.",
+                type: "warning",
+                message:
+                  "Favor de validar tu cuenta, con el código de verificación que se le ha enviado a su correo!.",
               },
               panelHerramientasVerificacion: true,
-              setTipoVerificacion: "verificacionUsuarioContrasena",
               setCorreo: correo,
             },
           })
@@ -205,15 +203,12 @@ export const resolvers = {
         contrasena,
         UsuarioLoggeado.contrasena
       );
+
       if (!comparacionContrasenas) {
-        UsuarioLoggeado = await Models.Usuario.findOne(
-          { usuario: correo, estado: true },
-          { max_intentos: 1, codigo_verificacion_usuario: 1 }
-        ).exec();
         Usuario = new UsuarioClass(UsuarioLoggeado);
 
+        //se crea un nuevo codigo de verificacion para el usuario
         if (UsuarioLoggeado.max_intentos >= 5) {
-          //se crea un nuevo codigo de verificacion para el usuario
           let result = await Usuario.verificacionNuevoUsuario().catch((err) => {
             console.log(err);
             console.dir(err);
@@ -222,8 +217,7 @@ export const resolvers = {
               componenteInterno: {
                 activationAlert: {
                   type: "error",
-                  message:
-                    err.mensaje || `Error en la creación de verificacion!.`,
+                  message: `Error al tratar de crear su código de verificación, Favor de intentar de nuevo o comunicarse al servicio al cliente!.`,
                 },
               },
             });
@@ -233,6 +227,7 @@ export const resolvers = {
           Usuario.enviandoCorreo({
             templateId: "d-42b7fb4fd59b48e4a293267f83c1523b",
             codigoVerificacion: result.data,
+            correo: UsuarioLoggeado.usuario,
           }).catch((err) => {
             return JSON.stringify({
               componenteInterno: {
@@ -250,16 +245,16 @@ export const resolvers = {
               pagina: "home",
               componenteInterno: {
                 setTipoVerificacion: "verificacionUsuario",
-                setCorreo: correo,
+                setCorreo: UsuarioLoggeado.usuario,
                 activationAlert: {
                   type: "warning",
-                  message: `Haz excedido el limite de intentos favor de validar su cuenta en su correo.`,
+                  message: `Haz excedido el limite de intentos favor de validar su cuenta en su correo!.`,
                 },
                 panelHerramientasVerificacion: true,
               },
             })
           );
-        }
+        } // Se paso de intentos
 
         //Se la da un nuevo intento
         Usuario.verificacionUsuarioNuevoIntento();
@@ -275,9 +270,16 @@ export const resolvers = {
             },
           })
         );
-      } //Validacion de intentos
+      } // Comparacion de contraseña fue incorrecta
 
-      //
+      // Nueva busqueda mas limpia y se limpia los intentos y se crean los tokens
+      UsuarioLoggeado = await Models.Usuario.findOne(
+        { usuario: correo, estado: true },
+        {}
+      )
+        .populate("anuncios_usuario")
+        .exec();
+
       Models.Usuario.findByIdAndUpdate(UsuarioLoggeado._id, {
         $set: { max_intentos: 0, codigo_verificacion_usuario: null },
       })
@@ -299,6 +301,7 @@ export const resolvers = {
         expire: new Date(new Date().getTime() + 6 * 1000), //60 * 60000)
       });
 
+      //Registro de bitacora
       const Bitacora = {
         Creacion: {
           id_usuario: UsuarioLoggeado.id,
@@ -315,7 +318,7 @@ export const resolvers = {
         componenteInterno: {
           activationAlert: { type: "success", message: "Bienvenido.!" },
           panelHerramientasBusqueda: true,
-          setSesion: UsuarioLoggeado
+          setSesion: UsuarioLoggeado,
         },
       });
     },
@@ -355,7 +358,8 @@ export const resolvers = {
               componenteInterno: {
                 activationAlert: {
                   type: "error",
-                  message: "Error al intentar guardar la contraseña, favor de intentarlo de nuevo o comunicarse con servicio al cliente!.",
+                  message:
+                    "Error inesperado, favor de validar su contraseña e intentarlo de nuevo o comunicarse con servicio al cliente!.",
                 },
               },
             })
@@ -415,6 +419,7 @@ export const resolvers = {
       }).catch((err) => {
         console.log("enviandoCorreo... en error");
         console.dir(err);
+        //Esto para ni regresa al cliente... porque???
         return JSON.stringify({
           componenteInterno: {
             activationAlert: {
@@ -726,13 +731,13 @@ export const resolvers = {
           JSON.stringify({
             pagina: "home",
             componenteInterno: {
-              panelHerramientasVerificacion: true,
               setTipoVerificacion: "verificacionUsuarioCelular",
               activationAlert: {
                 type: "error",
                 message:
                   "Haz excedido el limite de intentos favor de validar su cuenta con el código de verificación que se le ha enviado a su celular!.",
               },
+              panelHerramientasVerificacion: true,
             },
           })
         );
@@ -745,7 +750,8 @@ export const resolvers = {
           return JSON.stringify({
             activationAlert: {
               type: "error",
-              message: "Error inesperado, favor de intentarlo de nuevo!.",
+              message:
+                "Error inesperado, favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.",
             },
           });
         });
@@ -772,8 +778,8 @@ export const resolvers = {
           JSON.stringify({
             pagina: "home",
             componenteInterno: {
-              panelHerramientasVerificacion: true,
               setTipoVerificacion: "verificacionUsuarioCelular",
+              panelHerramientasVerificacion: true,
               activationAlert: {
                 type: "error",
                 message:
@@ -846,27 +852,29 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: "Error en la búsqueda!.",
+              message:
+                "Error inesperado, Favor de validar su usuario e intentarlo de nuevo!.",
             },
           },
         });
       }
 
       if (!ResultadoUsuario) {
+        console.log(`Usuario no encontrado ${ResultadoUsuario}`);
         throw new Error(
           JSON.stringify({
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Usuario no existe!.`,
+                message: `Usuario no encontrado, Favor de validar su usuario e intentarlo de nuevo!.`,
               },
             },
           })
         );
       }
 
-      Usuario = new UsuarioClass(ResultadoUsuario);
       //se crea un nuevo codigo de verificacion para el usuario
+      Usuario = new UsuarioClass(ResultadoUsuario);
       result = await Usuario.verificacionNuevoUsuario().catch((err) => {
         console.log(err);
         console.dir(err);
@@ -875,8 +883,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message:
-                error.mensaje || `Error en la creación de verificacion!.`,
+              message: `Error al tratar de crear su código de verificación, Favor de intentar de nuevo o comunicarse al servicio al cliente!.`,
             },
           },
         });
@@ -892,19 +899,22 @@ export const resolvers = {
             activationAlert: {
               type: "error",
               message:
-                "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente.",
+                "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.",
             },
           },
         });
       });
 
       return JSON.stringify({
-        mensaje: `${result.mensaje}`,
         pagina: "home",
         componenteInterno: {
-          panelHerramientasVerificacion: true,
           setTipoVerificacion: "verificacionUsuarioContrasena",
           setCorreo: usuario,
+          activationAlert: {
+            type: "success",
+            message: result.mensaje,
+          },
+          panelHerramientasVerificacion: true,
         },
       });
     },
@@ -941,7 +951,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Favor de Iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
+                message: `Error inesperado, favor de iniciar Sesion nuevamente e intentarlo de nuevo, o comunicarse con servicio al cliente!.`,
               },
             },
           })
@@ -960,8 +970,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message:
-                  error.mensaje || `Error en la creación de verificacion!.`,
+                message: `Error inesperado, favor de iniciar sesion nuevamente e intentarlo de nuevo o comunicarse al servicio al cliente!.`,
               },
             },
           });
@@ -1015,9 +1024,7 @@ export const resolvers = {
         );
       }
 
-      //agregar un input extra e si esta activo eliminar el codigo de verificacion, que pase por default false y solo
-      //en la accion de excederse del limite de 5 de inicio de sesion este lo mandará como verdaro
-      //Analizar, este es un guardado normal
+      //Quieren limpiar el campo del bloque de verificación usuario
       if (clean) {
         Usuario.verificacionNuevoUsuario(true).catch((err) => {
           return JSON.stringify({
@@ -1025,7 +1032,7 @@ export const resolvers = {
               activationAlert: {
                 type: "error",
                 message:
-                    error.mensaje || `Error en la creación de verificacion!.`,
+                  "Error inesperado, favor de iniciar sesion nuevamente e intentarlo de nuevo o comunicarse al servicio al cliente!.",
               },
             },
           });
@@ -1097,11 +1104,14 @@ export const resolvers = {
         ).exec();
       } catch (err) {
         console.dir(err);
+        res.clearCookie("refresh-token");
+        res.clearCookie("auth-token");
+
         return JSON.stringify({
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
+              message: `Error inesperado, favor de iniciar sesion nuevamente e intentarlo de nuevo  o comunicarse a servicio al cliente!.`,
             },
           },
         });
@@ -1118,7 +1128,7 @@ export const resolvers = {
               panelHerramientasInicioSesion: true,
               activationAlert: {
                 type: `error`,
-                message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
+                message: `Error inesperado, favor de iniciar sesion nuevamente e intentarlo de nuevo  o comunicarse a servicio al cliente!.`,
               },
             },
           })
@@ -1135,48 +1145,48 @@ export const resolvers = {
         input
       );
 
-      //Analizar uso
-      if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
-         Usuario.verificacionNuevoUsuario(true).catch((err) => {
-           return JSON.stringify({
-             componenteInterno: {
-               activationAlert: {
-                 type: "error",
-                 message:
-                   error.mensaje || `Error en la creación de verificacion!.`,
-               },
-             },
-           });
-         });
+      //Vuelve a comparar el codigo de verificacion de usario (ya que al pedir una actualizacion de contraseña este crea un codigo, creo???)
+      /*if (ResultadoUsuario.codigo_verificacion_usuario !== input) {
+        Usuario.verificacionNuevoUsuario(true).catch((err) => {
+          return JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message:
+                  error.mensaje || `Error en la creación de verificacion!.`,
+              },
+            },
+          });
+        });
 
-         //Este envío de correo es con el template Verificación!!
-         Usuario.enviandoCorreo({
-           templateId: "d-42b7fb4fd59b48e4a293267f83c1523b",
-           codigoVerificacion: result.data,
-         }).catch((err) => {
-           throw new Error(
-             JSON.stringify({
-               componenteInterno: {
-                 activationAlert: {
-                   type: `error`,
-                   message: `Favor de validar su correo o comunicarse con servicio al cliente!.`,
-                 },
-               },
-             })
-           );
-         });
+        //Este envío de correo es con el template Verificación!!
+        Usuario.enviandoCorreo({
+          templateId: "d-42b7fb4fd59b48e4a293267f83c1523b",
+          codigoVerificacion: result.data,
+        }).catch((err) => {
+          throw new Error(
+            JSON.stringify({
+              componenteInterno: {
+                activationAlert: {
+                  type: `error`,
+                  message: `Favor de validar su correo o comunicarse con servicio al cliente!.`,
+                },
+              },
+            })
+          );
+        });
 
-         throw new Error(
-           JSON.stringify({
-             componenteInterno: {
-               activationAlert: {
-                 type: `error`,
-                 message: `No pudimos actualizar su contraseña correctamente, le enviaremos un nuevo código de verificación a correo!.`,
-               },
-             },
-           })
-         );
-      }
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: `error`,
+                message: `No pudimos actualizar su contraseña correctamente, le enviaremos un nuevo código de verificación a correo!.`,
+              },
+            },
+          })
+        );
+      }*/
 
       result = await Usuario.guardandoContrasena().catch((err) => {
         throw new Error(
@@ -1193,6 +1203,7 @@ export const resolvers = {
         );
       });
 
+      //Analizar si se deba de borrar? porque hay dos comportamientos
       Usuario.verificacionNuevoUsuario((borrarCodigo = true)).catch((err) => {
         return JSON.stringify({
           componenteInterno: {
@@ -1200,7 +1211,7 @@ export const resolvers = {
             panelHerramientasInicioSesion: true,
             activationAlert: {
               type: `error`,
-              message: `Error al tratar de actualizar contraseña, favor de intentarlo de nuevo  o reportar el caso a servicio al cliente!.`,
+              message: `Error inesperado, favor de iniciar sesion nuevamente e intentarlo de nuevo o comunicarse al servicio al cliente!.`,
             },
           },
         });

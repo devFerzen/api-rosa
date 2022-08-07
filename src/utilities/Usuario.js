@@ -35,7 +35,7 @@ class Usuario {
                     return;
                 });
 
-            resolved({});
+            resolved({mensaje:'Código de verificación creado con éxito!.'});
         });
     }
 

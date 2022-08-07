@@ -113,26 +113,27 @@ export const resolvers = {
 
         return JSON.stringify({
           pagina: "home",
-          cerrarSesion: "",
           componenteInterno: {
+            cerrarSesion: "",
             panelHerramientasInicioSesion: true,
             activationAlert: {
               type: "error",
-              message: `Creación de anuncio con error, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
+              message: `Error inesperado, favor de validar formulario e intentar nuevamente, si el error persiste reportar el caso a servicio al cliente!.`,
             },
           },
         });
-      } //Llama a gql buscar usuario
+      }
 
       if (!ResultadoUsuario) {
         throw new Error(
           JSON.stringify({
             pagina: "home",
             componenteInterno: {
-              componenteInterno: { panelHerramientasInicioSesion: true },
+              cerrarSesion: "",
+              panelHerramientasInicioSesion: true,
               activationAlert: {
                 type: "error",
-                message: `Usuario no valido, favor de iniciar sesión nuevamente o reportar el caso a servicio al cliente!.`,
+                message: `Error inesperado favor de iniciar sesión nuevamente, si el error persiste reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -145,7 +146,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente.`,
+                message: `Tu cuenta presenta problemas de bloqueo, favor de contactar a servicio al cliente!.`,
               },
             },
           })
@@ -183,7 +184,8 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: 'Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.',
+                message:
+                  "Error al enviar el correo, favor de validarlo o comunicarse con servicio al cliente!.",
               },
             },
           });
@@ -194,6 +196,7 @@ export const resolvers = {
             pagina: "home",
             componenteInterno: {
               panelHerramientasVerificacion: true,
+              setTipoVerificacion: "verificacionCelular",
               activationAlert: {
                 type: "warning",
                 message: `Favor de validar su cuenta con el código de verificación que se le ha enviado a su celular!.`,
@@ -210,14 +213,16 @@ export const resolvers = {
       let NuevoAnuncio = await AnuncioModel.save().catch((err) => {
         console.log("AnuncioModel.save... en error");
         console.dir(err);
-        return JSON.stringify({
-          componenteInterno: {
-            activationAlert: {
-              type: "error",
-              message: `Error al intentar guardar el anuncio, favor validar los fomularios!.`,
+        throw new Error(
+          JSON.stringify({
+            componenteInterno: {
+              activationAlert: {
+                type: "error",
+                message: `Error al intentar guardar el anuncio, favor de validar los formularios!.`,
+              },
             },
-          },
-        });
+          })
+        );
       });
 
       //Salvando Id del nuevo anuncio la Creador
@@ -229,7 +234,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar actualizar su informacion, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
+              message: `Error al intentar actualizar su información, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -277,7 +282,7 @@ export const resolvers = {
           componenteInterno: {
             activationAlert: {
               type: "error",
-              message: `Error al intentar actualizar el anuncio, favor validar los fomularios o reportar el caso a servicio al cliente!.`,
+              message: `Error inesperado, favor de validar los formularios o reportar el caso a servicio al cliente!.`,
             },
           },
         });
@@ -289,7 +294,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Anuncio no encontrado, favor de intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
+                message: `Anuncio no encontrado, favor de actualizar e intentarlo de nuevo o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -299,7 +304,7 @@ export const resolvers = {
       console.dir(ResultadoAnuncio);
       return JSON.stringify({
         componenteInterno: {
-          anuncioAgregarNuevo: input,
+          agregarEnAnunciosUsuario: input,
           activationAlert: {
             type: "success",
             message: `Anuncio actualizado con éxito!.`,
@@ -312,9 +317,11 @@ export const resolvers = {
           anuncioEliminacion: 
         */
     async anuncioEliminacion(parent, { id_anuncio }, { Models, user }) {
-      let ResultadoAnuncio, ResultadoUsuario;
+      let ResultadoAnuncio, newResultadoUsuario;
+      let anunciosRestantes;
 
       //Se valida que sea el dueño del anuncio y se extrae la llamada en lean
+      console.log(`anuncioEliminacion ${id_anuncio}`);
       try {
         ResultadoAnuncio = await Models.Anuncio.findById(id_anuncio)
           .lean()
@@ -328,7 +335,7 @@ export const resolvers = {
             componenteInterno: {
               activationAlert: {
                 type: "error",
-                message: `Anuncio no encontrado, favor de actualizar o reportar el caso a servicio al cliente!.`,
+                message: `Error inesperado, favor de actualizar o reportar el caso a servicio al cliente!.`,
               },
             },
           })
@@ -361,34 +368,57 @@ export const resolvers = {
         );
       }
 
-      await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
+      try {
+        await Models.Anuncio.findByIdAndRemove(id_anuncio).exec();
+        //Encontrar el usuario y actualizar su lista de anuncios
+        newResultadoUsuario = await Models.Usuario.findById(user.id, {
+          anuncios_usuario: 1,
+        }).exec();
 
-      //Encontrar el usuario y actualizar su lista de anuncios
-      ResultadoUsuario = await Models.Usuario.findById(
-        ResultadoAnuncio.id_usuario,
-        { anuncios_usuario: 1 }
-      ).exec();
-
-      let anunciosRestantes = ResultadoUsuario.anuncios_usuario.filter(
-        (value, index) => {
-          if (value.toString() !== id_anuncio) {
-            return value;
-          }
+        if (!newResultadoUsuario) {
+          console.log(`User no encontrado ${user.id}`);
+          throw Error;
         }
-      );
+
+        anunciosRestantes = newResultadoUsuario.anuncios_usuario.filter(
+          (value, index) => {
+            if (typeof value == "object") {
+              console.log("es un objecto");
+              console.dir(value);
+              return value.toString();
+            }
+            if (value !== id_anuncio) {
+              console.log("es un string");
+              return value;
+            }
+          }
+        );
+      } catch (error) {
+        console.log("anuncioEliminacion... en error");
+        console.dir(error);
+
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error inesperado, al eliminar anuncio, favor de inicar sesión nuevamente!.`,
+            },
+          },
+        });
+      }
 
       console.log(`ResultadoUsuario`);
-      console.dir(ResultadoUsuario);
+      console.dir(newResultadoUsuario);
 
       console.log(`anunciosRestantes`);
       console.dir(anunciosRestantes);
 
-      ResultadoUsuario.anuncios_usuario = anunciosRestantes;
-      ResultadoUsuario.save();
+      newResultadoUsuario.anuncios_usuario = anunciosRestantes;
+      newResultadoUsuario.save();
 
       return JSON.stringify({
         componenteInterno: {
-          anuncioEliminar: id_anuncio,
+          eliminarEnAnunciosUsuario: id_anuncio,
           anuncioEditSet: {},
           activationAlert: {
             type: "success",
