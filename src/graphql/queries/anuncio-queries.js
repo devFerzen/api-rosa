@@ -7,6 +7,7 @@ import {
   crearVerificacionAnuncio,
   crearBitacoraBusquedas,
 } from "../../utilities/bitacoras";
+import mongoose from 'mongoose';
 import path from "path";
 import fs from "fs";
 import { promisify } from "util";
@@ -205,7 +206,10 @@ export const resolvers = {
           })
         );
       } // Numero de telefono no verificado
-
+      
+      let _id = new mongoose.Types.ObjectId();
+      input._id = _id;
+       
       const AnuncioModel = new Models.Anuncio(input);
       AnuncioModel.id_usuario = user.id;
 
@@ -253,6 +257,7 @@ export const resolvers = {
 
       return JSON.stringify({
         componenteInterno: {
+          agregarEnAnunciosUsuario: NuevoAnuncio,
           activationAlert: {
             type: "success",
             message: `Anunció creado con éxito!`,
@@ -304,7 +309,7 @@ export const resolvers = {
       console.dir(ResultadoAnuncio);
       return JSON.stringify({
         componenteInterno: {
-          agregarEnAnunciosUsuario: input,
+          anuncioEditado: input,
           activationAlert: {
             type: "success",
             message: `Anuncio actualizado con éxito!.`,
@@ -382,13 +387,16 @@ export const resolvers = {
 
         anunciosRestantes = newResultadoUsuario.anuncios_usuario.filter(
           (value, index) => {
+            //When value is extracted directly from mongoose
             if (typeof value == "object") {
-              console.log("es un objecto");
-              console.dir(value);
-              return value.toString();
+              value.id.toString();
+              console.log(value);
             }
-            if (value !== id_anuncio) {
-              console.log("es un string");
+
+            console.log(`value ${typeof value} :${value}`);
+            console.log(`id_anuncio ${typeof id_anuncio} :${id_anuncio}`);
+
+            if (value != id_anuncio) {
               return value;
             }
           }
@@ -407,12 +415,10 @@ export const resolvers = {
         });
       }
 
-      console.log(`ResultadoUsuario`);
-      console.dir(newResultadoUsuario);
-
       console.log(`anunciosRestantes`);
       console.dir(anunciosRestantes);
 
+      //Saving the remainig anuncios
       newResultadoUsuario.anuncios_usuario = anunciosRestantes;
       newResultadoUsuario.save();
 

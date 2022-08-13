@@ -67,10 +67,15 @@ export const resolvers = {
             se debe de poner en logs.
         */
     async nuevoContactoCliente(parent, { input }, { Models, user }) {
+      
+      //Es un usuario registrado...
       if (user !== null) {
+        console.dir(input);
         input.correo = `${input.correo} / ${user.id}`;
       }
 
+      console.log("nuevoContactoCliente... ");
+      console.dir(input)
       //creacion directa
       try {
         const CorreoModel = new Models.Correo(input);
@@ -92,7 +97,7 @@ export const resolvers = {
 
       return JSON.stringify({
         componenteInterno: {
-          panelHerramientasBusqueda: true,
+          panelHerramientasBusqueda: true, //Analizar, este debe que estar en el front-end
           activationAlert: {
             type: "success",
             message: `Correo enviado con éxito!.`,

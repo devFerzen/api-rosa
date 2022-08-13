@@ -68,6 +68,7 @@ export const typeDef = gql `
   }
 
   input AnuncioNewInput {
+    id: ID,
     categorias: [String],
     permisos: [String],
     Sec_Descripcion: SecDescripcionInput,
@@ -79,7 +80,7 @@ export const typeDef = gql `
     no_vistas: Int,
     Destacado: DestacamentoInput,
     verificado: Boolean,
-    id_usuario: String
+    id_usuario: String,
   }
 
   input VerificacionInput {
