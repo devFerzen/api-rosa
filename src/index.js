@@ -33,7 +33,7 @@ mongoose
   .catch((err) => console.log("DB No se Conecto... (T.T)"));
 
 //Server and env Config
-const port = process.env.port || 3000;
+const port = process.env.port || 3080;
 const app = express();
 
 const corsOption = {
@@ -100,7 +100,7 @@ app.use(async function (req, res, next) {
             console.log(authTokenVerify);
 
             UsuarioLoggeado = await Models.Usuario.findById(
-              authTokenVerify["http://localhost:3000/graphql"].id
+              authTokenVerify["http://localhost:3080/graphql"].id
             )
               .lean()
               .exec();
@@ -114,7 +114,7 @@ app.use(async function (req, res, next) {
           if (
             !UsuarioLoggeado ||
             UsuarioLoggeado.conteo_sesion !=
-              refreshTokenVerify["http://localhost:3000/graphql"].conteo_sesion
+              refreshTokenVerify["http://localhost:3080/graphql"].conteo_sesion
           ) {
             console.log(
               "no se encontro el usuario o son diferentes los conteos de sesion"
@@ -164,7 +164,7 @@ app.use(async function (req, res, next) {
   }
 
   req.user = {
-    id: authTokenVerify["http://localhost:3000/graphql"].id,
+    id: authTokenVerify["http://localhost:3080/graphql"].id,
     token: authToken,
   };
 
@@ -251,7 +251,7 @@ app.use("/uploads", express.static("uploads"));
 
 const server = new ApolloServer({
   schema: applyMiddleware(graphqlSchema),
-  graphiql: process.env.NODE_ENV === "dev" ? true : false,
+  graphiql: process.env.NODE_ENV === "dev" ? true : false, //http://localhost:3080/graphql
   context: apolloContext,
 });
 server.applyMiddleware({ app, cors: corsOption }); //overriding cors made by express https://stackoverflow.com/questions/54485239/apollo-server-express-cors-issue

@@ -16,13 +16,26 @@ export const resolvers = {
       try {
         return await Models.Paquete.find({ estado: true });
       } catch (error) {
-        console.dir(err);
-        throw new Error(err);
+        console.dir(error);
+
+        return JSON.stringify({
+          componenteInterno: {
+            activationAlert: {
+              type: "error",
+              message: `Error al intentar encontrar el Usuario!.`,
+            },
+          },
+        });
       }
     },
   },
   Mutation: {
+
+    //Analizar permiso de ejecutivo
     async creacionPaquete(parent, { input }, { Models }) {
+      console.log(`creacionPaquete... input:`);
+      console.dir(input);
+      
       const paquete = new Models.Paquete(input);
 
       let result = await paquete.save().catch((err) => {

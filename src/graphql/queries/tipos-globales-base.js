@@ -99,6 +99,7 @@ export const typeDef = gql `
     nombre: String,
     descripcion: String,
     precio: Int,
+    descuento: Int,
     periodo_por: Int,
     estado: Boolean
   }
@@ -109,6 +110,7 @@ export const typeDef = gql `
     nombre: String,
     descripcion: String,
     precio: Int,
+    descuento: Int,
     periodo_por: Int,
     estado: Boolean
   }
