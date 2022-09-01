@@ -121,7 +121,8 @@ export const typeDef = gql `
     icono_icono: String,
     icono_categoria: String,
     categoria: String,
-    estado: Boolean
+    estado: Boolean,
+    no_estado: String
   }
 
   input DdlGeneralInput {

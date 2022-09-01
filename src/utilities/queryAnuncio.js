@@ -25,11 +25,11 @@ class QueryAnuncio {
         }
 
         if (this.hasOwnProperty('busquedaEstado')) {
-            Result['Sec_Descripcion.estado'] = { '$regex': `.*${this.busquedaEstado}*.`, '$options': 'i' }
+            Result["Sec_Descripcion.estado"] = `${this.busquedaEstado} `;
         }
 
         if (this.hasOwnProperty('busquedaCiudad')) {
-            Result['Sec_Descripcion.ciudad'] = { '$regex': `.*${this.busquedaCiudad}*.`, '$options': 'i' }
+            Result["Sec_Descripcion.ciudad"] = `${this.busquedaCiudad} `;
         }
 
         if (this.hasOwnProperty('busquedaSexo')) {

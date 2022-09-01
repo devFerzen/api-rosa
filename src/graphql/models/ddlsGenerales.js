@@ -6,7 +6,8 @@ const ddlsGeneralSchema = new Schema({
     icono_icono: { type: String },
     icono_categoria: { type: String },
     estado: { type: Boolean, default: true },
-    categoria: { type: String, required: true }
+    categoria: { type: String, required: true },
+    no_estado: { type: String }
 });
 const ddlGeneral = new model('ddlGeneral', ddlsGeneralSchema)
 export default ddlGeneral;
