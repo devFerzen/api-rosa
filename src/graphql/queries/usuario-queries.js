@@ -1221,7 +1221,6 @@ export const resolvers = {
       res.clearCookie("auth-token");
 
       return JSON.stringify({
-        mensaje: `${result.mensaje}`,
         pagina: "home",
         componenteInterno: {
           cerrarSesion: "",
