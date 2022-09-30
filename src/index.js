@@ -17,6 +17,7 @@ import mongoose from "mongoose";
 import morgan from "morgan";
 import multer from "multer";
 import path from "path";
+import cloudinary from "cloudinary";
 
 import creacionToken from "./utilities/autorizacionToken";
 import Models from "./graphql/models";
@@ -209,8 +210,21 @@ let upload = multer({
   },
 });
 
-app.post("/upload", upload.array("filePondImages", 6), (req, res, next) => {
-  console.log("uploading file: ", req.files);
+// Return "https" URLs by setting secure: true
+cloudinary.config({
+  secure: true,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Log the configuration
+console.log(cloudinary.config());
+
+app.post("/upload", upload.array("filePondImages", 6), async (req, res, next) => {
+  console.log("req files: ");
+  console.dir(req.files);
+  console.log("req body");
   console.dir(req.body);
   /*{ 
         Object explain
@@ -231,7 +245,20 @@ app.post("/upload", upload.array("filePondImages", 6), (req, res, next) => {
     return next(error);
   }
 
-  res.send([req.files[0].filename]);
+  const answer = await cloudinary.uploader
+    .upload(req.files[0].path)
+    .then((result) => {
+      console.log("result...");
+      console.log(result);
+      res.send(result.secure_url);
+    })
+    .catch((err)=>{
+      console.log("err....");
+      console.dir(err);
+  res.status(500).send(new Error("archivo fallidoo buajajaj"));
+
+    });
+
 });
 
 app.post("/delete", (req, res, next) => {

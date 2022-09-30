@@ -27,7 +27,9 @@ export default shield(
         queryUsuarioById: paseLibre,
         queryUsuario: paseLibre,
         //Anuncio
-        queryAnuncios: paseLibre
+        queryAnuncios: paseLibre,
+        //General
+        queryddlsByCategoria: paseLibre
     },
     Mutation: {
         //Usuario
